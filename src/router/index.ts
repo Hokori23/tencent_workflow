@@ -5,6 +5,12 @@ import Home from '../views/Home.vue';
 Vue.use(VueRouter);
 
 const routes: Array<RouteConfig> = [
+  {
+    path: '/:flowId',
+    name: 'Home',
+    component: Home,
+    props: true
+  }
 ];
 
 const router = new VueRouter({
