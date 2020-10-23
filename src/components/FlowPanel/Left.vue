@@ -22,9 +22,9 @@
     </el-collapse>
   </aside>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
-  export default Vue.extend({
+  export default {
     name: 'FlowPanel__Left',
     data() {
       return {
@@ -53,15 +53,9 @@
         if (dom.nodeName === 'BUTTON' && dom.draggable) {
           console.log('drag start');
         }
-      },
-      handleStartNodeDragStart(node, event) {
-        console.log('drag start', node, event);
-      },
-      handleStartNodeDragEnd(draggingNode, dropNode, type, event) {
-        console.log('drag drop', draggingNode, dropNode, type, event);
       }
     }
-  });
+  };
 </script>
 <style lang="scss">
   .flow-panel__left {

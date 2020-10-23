@@ -1,11 +1,13 @@
 <template>
   <section class="flow-panel__node">
-    <el-button :type="btnType[type - 1] || 'warning'">{{ text }}</el-button>
+    <el-button :type="btnType[type - 1] || 'warning'">{{
+      btnType[type - 1] ? text : '节点类型错误'
+    }}</el-button>
   </section>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
-  export default Vue.extend({
+  export default {
     props: {
       text: String,
       position: Object, // Point
@@ -17,7 +19,7 @@
         btnType: ['primary', 'info', 'danger']
       };
     }
-  });
+  };
 </script>
 <style lang="scss" scoped>
   .flow-panel__node {

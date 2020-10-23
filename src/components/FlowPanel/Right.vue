@@ -48,9 +48,9 @@
     </div>
   </aside>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
-  export default Vue.extend({
+  export default {
     name: 'FlowPanel__Right',
     props: {
       selectedNode: Object
@@ -84,7 +84,7 @@
     created() {
       this.formatProp();
     }
-  });
+  };
 </script>
 
 <style lang="scss">

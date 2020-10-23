@@ -19,7 +19,7 @@
     <FlowPanelRight :selectedNode="selectedNode" />
   </section>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
 
   import FlowPanelLeft from './Left.vue';
@@ -27,10 +27,10 @@
   import Node from '@/components/Node.vue';
   // import FlowPanelMain from './Main.vue';
 
-  export default Vue.extend({
+  export default {
     name: 'FlowPanel',
     props: {
-      currentFlowIdx: Number
+      currentFlowId: Number
     },
     components: {
       FlowPanelLeft,
@@ -39,11 +39,14 @@
       Node
     },
     watch: {
-      currentFlowIdx() {
-        /**
-         * 切换场景时清空状态
-         * 比如当前选中节点
-         */
+      currentFlowId: {
+        handler(val) {
+          console.log(val);
+          /**
+           * 切换场景时清空状态
+           * 比如当前选中节点
+           */
+        }
       }
     },
     data() {
@@ -73,11 +76,8 @@
       handleNodeDragOver(e) {
         e.preventDefault();
       }
-    },
-    mounted() {
-      console.log(this.$attrs.flowId);
     }
-  });
+  };
 </script>
 <style lang="scss">
   .flow-panel {

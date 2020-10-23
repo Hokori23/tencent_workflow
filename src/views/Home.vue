@@ -1,11 +1,11 @@
 <template>
   <div class="home">
     <Navigation
-      :currentFlowIdx="currentFlowIdx"
+      :currentFlowId="currentFlowId"
       :flows="flows"
       @changeFlow="changeFlow"
     />
-    <FlowPanel :currentFlowIdx="currentFlowIdx" />
+    <FlowPanel :currentFlowId="currentFlowId" />
   </div>
 </template>
 
@@ -13,8 +13,6 @@
   import Navigation from '@/components/Navigation';
   import FlowPanel from '@/components/FlowPanel';
 
-  import Node from '@/vo/Node';
-  import Line from '@/vo/Line';
   export default {
     name: 'Home',
     components: {
@@ -22,7 +20,7 @@
       FlowPanel
     },
     computed: {
-      currentFlowIdx() {
+      currentFlowId() {
         return Number(this.$attrs.flowId);
       }
     },

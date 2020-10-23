@@ -3,11 +3,11 @@
     <router-view />
   </div>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
-  export default Vue.extend({
+  export default {
     name: 'App'
-  });
+  };
 </script>
 
 <style lang="scss">

@@ -1,10 +1,14 @@
 import Vue from 'vue';
-import VueRouter, { RouteConfig } from 'vue-router';
+import VueRouter from 'vue-router';
 import Home from '../views/Home.vue';
 
 Vue.use(VueRouter);
 
-const routes: Array<RouteConfig> = [
+const routes = [
+  {
+    path: '/',
+    redirect: '/1'
+  },
   {
     path: '/:flowId',
     name: 'Home',

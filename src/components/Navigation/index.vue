@@ -2,7 +2,7 @@
   <nav class="nav">
     <div class="currentFlow">
       <span class="currentFlow__text"
-        >流程{{ flows[currentFlowIdx - 1].text }}</span
+        >流程{{ flows[currentFlowId - 1].text }}</span
       >
       <div>
         <el-button
@@ -31,22 +31,22 @@
     </div>
   </nav>
 </template>
-<script lang="ts">
+<script>
   import Vue from 'vue';
-  export default Vue.extend({
+  export default {
     name: 'Navigation',
     props: {
-      currentFlowIdx: Number,
+      currentFlowId: Number,
       flows: Array
     },
     methods: {
-      handleFlowChange(id: number) {
-        if (id !== this.currentFlowIdx) {
+      handleFlowChange(id) {
+        if (id !== this.currentFlowId) {
           this.$emit('changeFlow', id);
         }
       }
     }
-  });
+  };
 </script>
 <style lang="scss" scoped>
   .nav {
