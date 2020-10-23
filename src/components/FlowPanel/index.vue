@@ -4,10 +4,10 @@
     <figure
       class="flow-panel__main"
       ref="flow-panel"
-      @drop="handleNodeDrop"
-      @dragover="handleNodeDragOver"
-      @mousedown="handleMouseDown"
-      @mouseup="handleMouseUp"
+      @drop="drop"
+      @dragover="dragover"
+      @mousedown="mousedown"
+      @mouseup="mouseup"
     >
       <!-- 工作流主要区域 -->
       <svg
@@ -21,7 +21,7 @@
           :key="idx"
           :node="node"
           :idx="idx"
-          :selectedId="selectedNode ? selectedNode.id : null"
+          :selectedIdx="selectedNode ? selectedNode.idx : -1"
           @selectNode="selectNode"
           @changeTarget="handleTargetChange"
         />
@@ -39,6 +39,7 @@
 <script>
   import Vue from 'vue';
 
+  import bus from '@/bus';
   import FlowPanelLeft from './Left.vue';
   import FlowPanelRight from './Right.vue';
   import NodeComponent from '@/components/Node.vue';
@@ -81,6 +82,7 @@
     methods: {
       selectNode(node) {
         this.selectedNode = node;
+        this.selectedNode.idx = this.nodes.indexOf(node);
       },
       saveNode(node) {
         for (let i = 0; i < this.nodes.length; i++) {
@@ -98,14 +100,46 @@
           this.nowTarget = null;
         }
       },
-      handleNodeDrop(e) {
-        console.log('drag drop', e);
+      drop(e) {
+        let { newnodetype, label } = JSON.parse(
+          e.dataTransfer.getData('newNode')
+        );
+        newnodetype = Number(newnodetype);
+        const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
+
+        // 至多存在一个开始或结束节点
+        if (newnodetype === 1 || newnodetype === 3) {
+          for (let i = 0; i < this.nodes.length; i++) {
+            if (this.nodes[i].type === newnodetype) {
+              this.$alert(
+                `至多存在一个${newnodetype === 1 ? '开始' : '结束'}节点`,
+                '警告',
+                {
+                  confirmButtonText: '确定'
+                }
+              );
+              return;
+            }
+          }
+        }
+
+        // 添加节点
+        this.nodes.push(
+          new Node(
+            null,
+            label,
+            new Point(e.clientX - offsetLeft - 50, e.clientY - offsetTop - 20),
+            [],
+            newnodetype
+          )
+        );
       },
-      handleNodeDragOver(e) {
+      dragover(e) {
         e.preventDefault();
       },
-      handleMouseDown(e) {
+      mousedown(e) {
         if (!this.nowTarget) {
+          this.selectedNode = null;
           return;
         }
         const { type, idx, x, y } = this.nowTarget;
@@ -114,9 +148,8 @@
           const { position } = this.nodes[idx];
           const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
           this.$refs['flow-panel'].onmousemove = (e) => {
-              console.log(e);
-              position.x = e.clientX - offsetLeft - x;
-              position.y = e.clientY - offsetTop - y;
+            position.x = e.clientX - offsetLeft - x;
+            position.y = e.clientY - offsetTop - y;
           };
           return;
         }
@@ -125,16 +158,23 @@
           console.log('锚点拖拽');
         }
       },
-      handleMouseUp(e) {
+      mouseup(e) {
         this.$refs['flow-panel'].onmousemove = null;
         console.log('up');
       },
-      handleMouseMove(e) {
-        console.log(e);
+      deleteNode() {
+        if (!this.selectedNode) {
+          this.$alert('暂无选中节点', '警告', {
+            confirmButtonText: '确定'
+          });
+          return;
+        }
+        this.nodes.splice(this.selectedNode.idx, 1);
+        this.selectedNode = null;
       }
     },
     mounted() {
-      // console.log(this.nodes);
+      bus.$on('deleteNode', this.deleteNode);
     }
   };
 </script>

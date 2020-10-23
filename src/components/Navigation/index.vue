@@ -11,6 +11,7 @@
           circle
           plain
           size="mini"
+          @click="handleDeleteNode"
         ></el-button>
       </div>
     </div>
@@ -33,6 +34,9 @@
 </template>
 <script>
   import Vue from 'vue';
+  
+  import bus from '@/bus';
+
   export default {
     name: 'Navigation',
     props: {
@@ -44,6 +48,9 @@
         if (id !== this.currentFlowId) {
           this.$emit('changeFlow', id);
         }
+      },
+      handleDeleteNode() {
+        bus.$emit('deleteNode');
       }
     }
   };
