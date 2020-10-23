@@ -6,7 +6,7 @@
   <g
     :class="{
       'flow-panel__node': true,
-      'flow-panel__node--active': selectedId === node.id
+      'flow-panel__node--active': selectedIdx === idx
     }"
     @mousedown="handleSelectNode"
   >
@@ -43,10 +43,19 @@
     props: {
       node: Object,
       idx: Number,
-      selectedId: Number
+      selectedIdx: Number
+    },
+    watch: {
+      node: {
+        handler() {
+          this.init();
+        },
+        deep: true
+      }
     },
     computed: {
       anchorPosition() {
+        console.log('computed position');
         const { position } = this.node;
         const { x, y } = position;
         const halfWidth = this.width / 2;
@@ -78,20 +87,22 @@
             type,
             idx,
             x: this.width / 2,
-            y: this.height / 2,
+            y: this.height / 2
           },
           state
         );
       },
       fixXY(p) {
         return p % 5 > 2 ? p + (5 - (p % 5)) : p - (p % 5);
+      },
+      async init() {
+        const nowStyle = await getComputedStyle(this.$el.firstChild.firstChild);
+        this.height = Number(nowStyle.height.split('px')[0]);
+        this.width = Number(nowStyle.width.split('px')[0]);
       }
     },
     mounted() {
-      // 初始化宽高
-      const nowStyle = getComputedStyle(this.$el.firstChild.firstChild);
-      this.height = Number(nowStyle.height.split('px')[0]);
-      this.width = Number(nowStyle.width.split('px')[0]);
+      this.init();
     }
   };
 </script>
