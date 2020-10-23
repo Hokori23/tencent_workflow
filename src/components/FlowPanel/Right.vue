@@ -70,6 +70,7 @@
         handler(val) {
           this.formatProp();
         },
+        deep: true,
         immediate: true
       }
     },
