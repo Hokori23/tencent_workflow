@@ -1,7 +1,14 @@
-import Point from './Point';
-import Line from './Line';
 export default class Node {
-  constructor(name, position, lines, type) {
+  /**
+   * 
+   * @param { number } id 
+   * @param { string } name 
+   * @param { Point } position 
+   * @param { Array<Line> } lines 
+   * @param { number } type 
+   */
+  constructor(id, name, position, lines, type) {
+    this.id = id;
     this.name = name;
     this.position = position;
     this.lines = lines;

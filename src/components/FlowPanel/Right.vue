@@ -8,7 +8,7 @@
           style="margin-top: 10px"
           size="small"
           disabled
-          v-model="node.type"
+          :value="computedType"
         >
         </el-input>
       </div>
@@ -19,13 +19,21 @@
       </div>
       <div>
         left坐标
-        <el-input style="margin-top: 10px" size="small" v-model="node.left">
+        <el-input
+          style="margin-top: 10px"
+          size="small"
+          v-model="node.position.x"
+        >
           <template slot="append">px</template>
         </el-input>
       </div>
       <div>
         top坐标
-        <el-input style="margin-top: 10px" size="small" v-model="node.top">
+        <el-input
+          style="margin-top: 10px"
+          size="small"
+          v-model="node.position.y"
+        >
           <template slot="append">px</template>
         </el-input>
       </div>
@@ -50,10 +58,30 @@
 </template>
 <script>
   import Vue from 'vue';
+
+  import Point from '@/vo/Point';
   export default {
     name: 'FlowPanel__Right',
     props: {
       selectedNode: Object
+    },
+    watch: {
+      selectedNode: {
+        handler(val) {
+          this.formatProp();
+        },
+        immediate: true
+      }
+    },
+    computed: {
+      computedType() {
+        const typeDictionary = {
+          1: '开始节点',
+          2: '普通节点',
+          3: '结束节点'
+        };
+        return typeDictionary[this.node?.type] || '错误类型';
+      }
     },
     data() {
       return {
@@ -68,21 +96,17 @@
         /**
          * $emit here
          */
+        const node = JSON.parse(JSON.stringify(this.node));
+        const { position } = node;
+        node.position = new Point(Number(position.x), Number(position.y));
+        this.$emit('saveNode', node);
       },
       formatProp() {
-        const typeDictionary = {
-          1: '开始节点',
-          2: '普通节点',
-          3: '结束节点'
-        };
-        this.node = {
-          ...this.selectedNode,
-          type: typeDictionary[this.selectedNode?.type] || '错误类型'
-        };
+        if (!this.selectedNode) {
+          return;
+        }
+        this.node = JSON.parse(JSON.stringify(this.selectedNode));
       }
-    },
-    created() {
-      this.formatProp();
     }
   };
 </script>
