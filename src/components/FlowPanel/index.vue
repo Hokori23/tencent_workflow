@@ -196,9 +196,14 @@
           const { idx, node, position } = this.nowTarget;
           const { x, y } = node.position; // 当前节点(左上)坐标
           const { cx, cy } = position; // 锚点起始点坐标
-          const tempLinePoint = (this.tempLinePoint = JSON.parse(
-            JSON.stringify(node)
-          ));
+          // const tempLinePoint = (this.tempLinePoint = JSON.parse(
+          //   JSON.stringify(node)
+          // ));
+          const tempLinePoint = (this.tempLinePoint = Object.assign({}, node));
+          const tempLinePoinstPosition = JSON.parse(
+            JSON.stringify(node.position)
+          );
+          tempLinePoint.position = tempLinePoinstPosition;
           tempLinePoint.absolutePosition = true; // 给Line.vue标志，用于附加absolutePosition
 
           // 临时从锚点拉扯出一条线
@@ -225,18 +230,18 @@
           return;
         }
         const { type } = this.nowTarget;
-        // const { type, idx, x, y } = this.nowTarget;
-        console.log('index.vue - mouseup', type);
         // 处理情况1 线
         if (type === 'LINE') {
-          // const { idx, node, position } = this.nowTarget;
           bus.$emit('stopComputingNearestAnchor');
-          this.tempLine = this.tempLinePoint = null;
           if (this.isAttachedNode) {
             this.isAttachedNode = false;
-          } else {
+          } else if (this.tempLinePoint && this.tempLine) {
             this.lines.pop();
           }
+
+          // 清理临时数据
+          this.tempLinePoint && delete this.tempLinePoint.absolutePosition;
+          this.tempLine = this.tempLinePoint = null;
         }
         // 处理情况2 节点锚点
         if (type === 'ANCHOR') {

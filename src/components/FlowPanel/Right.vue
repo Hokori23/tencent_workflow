@@ -137,11 +137,18 @@
         if (!this.selectedDOM) {
           return;
         }
-        this.node = JSON.parse(JSON.stringify(this.selectedDOM));
-
-        // line's select label
-        this.selectedType === 'LINE' &&
-          (this.node.type = this.LineTypeMap[this.node.type - 1]);
+        const type = this.selectedType;
+        this.node = Object.assign({}, this.selectedDOM);
+        if (type === 'NODE') {
+          const position = JSON.parse(JSON.stringify(this.selectedDOM.position));
+          this.node.position = position;
+          return;
+        }
+        if (type === 'LINE') {
+          console.log(this.selectedDOM);
+          this.node.type = this.LineTypeMap[this.node.type - 1];
+          // style clone -------------- to do
+        }
       }
     }
   };
