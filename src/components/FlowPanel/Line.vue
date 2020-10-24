@@ -17,14 +17,14 @@
       @mouseup="handleChangeTarget('LINE', false, idx)"
     >
     </line>
-    <text
+    <!-- 条件文字 -->
+    <!-- <text
       style="fill: red"
       :x="(position.x1 - position.x2) / 2"
       :y="(position.y1 - position.y2) / 2"
     >
-      <!-- <textPath :xlink:href="`#line-${idx}`">{{ line.text }}</textPath> -->
       {{ line.text }}
-    </text>
+    </text> -->
   </g>
 </template>
 <script>
@@ -40,7 +40,8 @@
         handler(val) {
           this.init();
         },
-        deep: true
+        deep: true,
+        immediate: true
       }
     },
     data() {
@@ -100,11 +101,14 @@
           x2: x(end, end_anchor),
           y2: y(end, end_anchor)
         };
+
+        // 给Node.vue提供绝对坐标
+        end.absolutePosition && (end.absolutePosition = this.position);
       }
-    },
-    created() {
-      this.init();
     }
+    // created() {
+    //   this.init();
+    // }
   };
 </script>
 <style lang="scss" scoped>

@@ -2,15 +2,23 @@
   <g
     :class="{
       'flow-panel__node': true,
-      'flow-panel__node--active': selectedIdx === idx
+      'flow-panel__node--active': selectedIdx === idx || isListening
     }"
+    ref="node"
     @mousedown="handleSelectNode"
   >
+    <rect
+      :width="width + 40"
+      :height="height + 40"
+      :x="node.position.x - 20"
+      :y="node.position.y - 20"
+      style="fill: transparent; cursor: default"
+    />
     <foreignObject
       :width="width"
       :height="height"
-      :x="fixXY(node.position.x)"
-      :y="fixXY(node.position.y)"
+      :x="node.position.x"
+      :y="node.position.y"
       @mousedown="handleChangeTarget('NODE', idx)"
       requiredExtensions="http://www.w3.org/1999/xhtml"
     >
@@ -25,6 +33,7 @@
         :key="idx"
         :cx="position.cx"
         :cy="position.cy"
+        :class="{ 'flow-panel__node__circle--active': nearstAnchor === idx }"
         @mousedown="handleChangeTarget('ANCHOR', idx, position)"
         r="5"
       />
@@ -32,12 +41,17 @@
   </g>
 </template>
 <script>
+  import bus from '@/bus';
+
+  import { getDistance, isUndef, isDef } from '@/utils';
   export default {
     name: 'NodeComponent',
     props: {
       node: Object,
       idx: Number,
-      selectedIdx: Number
+      selectedIdx: Number,
+      tempLinePoint: Object,
+      tempLine: Object
     },
     watch: {
       node: {
@@ -45,6 +59,11 @@
           this.init();
         },
         deep: true
+      },
+      tempLinePoint(v) {
+        if (!v) {
+          return;
+        }
       }
     },
     computed: {
@@ -65,7 +84,9 @@
       return {
         btnType: ['primary', 'success', 'danger'],
         width: 0,
-        height: 0
+        height: 0,
+        isListening: false,
+        nearstAnchor: null
       };
     },
     methods: {
@@ -90,11 +111,52 @@
           });
         }
       },
+      computeNearestAnchor(idx, node) {
+        this.isListening = true;
+        if (node === this.node) {
+          return;
+        }
+        this.$refs['node'].onmousemove = () => {
+          const { x2, y2 } = this.tempLinePoint.absolutePosition; // 线头绝对坐标
+          // 计算出最近的锚点
+          let minAnchor;
+          let minDistance;
+          this.anchorPosition.forEach((anchor, idx) => {
+            const distance = getDistance(x2, y2, anchor.cx, anchor.cy);
+            if (isUndef(minDistance) || minDistance > distance) {
+              minDistance = distance;
+              minAnchor = idx;
+            }
+          });
+          this.nearstAnchor = minDistance > 20 ? null : minAnchor;
+        };
+      },
+      stopComputingNearestAnchor() {
+        this.isListening = false;
+        this.$refs['node'].onmousemove = null;
+        if (isDef(this.nearstAnchor)) {
+          console.log(this.tempLine.start.name, this.node.name);
+          // if (this.tempLine.start === this.node) {
+          //   this.$alert('不能连接到节点本身', '警告', {
+          //     confirmButtonText: '确定'
+          //   });
+          // } else {
+          // 吸附在锚点上
+          this.tempLine.end = this.node;
+          this.tempLine.end_anchor = this.nearstAnchor + 1;
+          this.node.lines.push(this.tempLine);
+          bus.$emit('attachNode');
+          // }
+        }
+        this.nearstAnchor = null;
+      },
       fixXY(p) {
         return p % 5 > 2 ? p + (5 - (p % 5)) : p - (p % 5);
       },
       async init() {
-        const nowStyle = await getComputedStyle(this.$el.firstChild.firstChild);
+        const nowStyle = await getComputedStyle(
+          this.$el.childNodes[1].firstChild
+        );
         this.height = Number(nowStyle.height.split('px')[0]);
         this.width = Number(nowStyle.width.split('px')[0]);
         this.$set(this.node, 'height', this.height);
@@ -102,7 +164,13 @@
       }
     },
     mounted() {
+      bus.$on('computeNearestAnchor', this.computeNearestAnchor);
+      bus.$on('stopComputingNearestAnchor', this.stopComputingNearestAnchor);
       this.init();
+    },
+    beforeDestroy() {
+      bus.$off('computeNearestAnchor');
+      bus.$off('stopComputingNearestAnchor');
     }
   };
 </script>
@@ -111,12 +179,12 @@
     cursor: pointer;
     circle {
       stroke: #ffffff;
+      &.flow-panel__node__circle--active,
       &:hover {
         fill: #ffffff;
         r: 7;
       }
     }
-    // 视线头寻找最近吸附点的情况决定
     > g {
       display: none;
     }
@@ -124,21 +192,23 @@
     &:hover > g {
       display: block;
     }
-    // 视线头寻找最近吸附点的情况决定
     &__anchor--primary circle {
       fill: #409eff;
+      &.flow-panel__node__circle--active,
       &:hover {
         stroke: #409eff;
       }
     }
     &__anchor--success circle {
       fill: #67c23a;
+      &.flow-panel__node__circle--active,
       &:hover {
         stroke: #67c23a;
       }
     }
     &__anchor--danger circle {
       fill: #f56c6c;
+      &.flow-panel__node__circle--active,
       &:hover {
         stroke: #f56c6c;
       }

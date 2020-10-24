@@ -24,6 +24,8 @@
           :selectedIdx="
             selectedDOM && selectedType === 0 ? selectedDOM.idx : -1
           "
+          :tempLinePoint="tempLinePoint"
+          :tempLine="tempLine"
           @select="select"
           @changeTarget="handleTargetChange"
         />
@@ -65,8 +67,8 @@
   import Line from '@/vo/Line';
   import Point from '@/vo/Point';
   // import FlowPanelMain from './Main.vue';
-  const node1 = new Node(1, '一个节点', new Point(150, 150), [], 1);
-  const node2 = new Node(2, '第二个节点', new Point(400, 200), [], 2);
+  const node1 = new Node(1, '一个节点', new Point(0, 0), [], 1);
+  const node2 = new Node(2, '第二个节点', new Point(150, 150), [], 2);
   export default {
     name: 'FlowPanel',
     props: {
@@ -97,7 +99,9 @@
         selectedDOM: null,
         selectedType: null, // ['NODE', 'LINE']
         nowTarget: null, // 当前操作对象: [Node, Line]
-        tempLinePoint: null // 临时线头
+        tempLinePoint: null, // 临时线头
+        tempLine: null, // 临时线
+        isAttachedNode: false // 用于判断是否触发了EventBus的'attachNode'事件
       };
     },
     methods: {
@@ -123,13 +127,10 @@
             break;
           }
         }
-        // 保存?
+        // 保存 ----------- to do
       },
       handleTargetChange(nowTarget) {
         this.nowTarget = nowTarget;
-        //  else {
-        //   this.nowTarget = null;
-        // }
       },
       drop(e) {
         let { newnodetype, label } = JSON.parse(
@@ -187,45 +188,86 @@
         }
         // 处理情况2 节点锚点
         if (type === 'ANCHOR') {
+          /**
+           * idx: ANCHOR类别;
+           * node: ANCHOR所属节点;
+           * position: ANCHOR坐标;
+           */
           const { idx, node, position } = this.nowTarget;
-          const { x, y } = node.position;
-          // 起始点坐标
-          const { cx, cy } = position;
-          const tempNode = (this.tempLinePoint = JSON.parse(
+          const { x, y } = node.position; // 当前节点(左上)坐标
+          const { cx, cy } = position; // 锚点起始点坐标
+          const tempLinePoint = (this.tempLinePoint = JSON.parse(
             JSON.stringify(node)
           ));
+          tempLinePoint.absolutePosition = true; // 给Line.vue标志，用于附加absolutePosition
+
           // 临时从锚点拉扯出一条线
-          this.lines.push(new Line(null, '', node, tempNode, idx, idx, 1));
+          const tempLine = (this.tempLine = new Line(
+            null,
+            '',
+            node,
+            tempLinePoint,
+            idx,
+            idx,
+            1
+          ));
+          this.lines.push(tempLine);
+          bus.$emit('computeNearestAnchor', idx, node);
           this.$refs['flow-panel'].onmousemove = (e) => {
-            tempNode.position.x = e.clientX - offsetLeft - (cx - x);
-            tempNode.position.y = e.clientY - offsetTop - (cy - y);
+            tempLinePoint.position.x = e.clientX - offsetLeft - (cx - x);
+            tempLinePoint.position.y = e.clientY - offsetTop - (cy - y);
           };
         }
       },
       mouseup(e) {
         this.$refs['flow-panel'].onmousemove = null;
-        if (this.nowTarget) {
-          const { type, idx, x, y } = this.nowTarget;
-          // 处理情况2 节点锚点
-          if (type === 'ANCHOR') {
-            console.log('锚点拖拽');
-          }
-          this.nowTarget = null;
+        if (!this.nowTarget) {
+          return;
         }
+        const { type } = this.nowTarget;
+        // const { type, idx, x, y } = this.nowTarget;
+        console.log('index.vue - mouseup', type);
+        // 处理情况1 线
+        if (type === 'LINE') {
+          // const { idx, node, position } = this.nowTarget;
+          bus.$emit('stopComputingNearestAnchor');
+          this.tempLine = this.tempLinePoint = null;
+          if (this.isAttachedNode) {
+            this.isAttachedNode = false;
+          } else {
+            this.lines.pop();
+          }
+        }
+        // 处理情况2 节点锚点
+        if (type === 'ANCHOR') {
+          console.log('取消锚点拖拽');
+        }
+        this.nowTarget = null;
       },
-      deleteNode() {
+      attachNode() {
+        this.isAttachedNode = true;
+      },
+      deleteDOM() {
         if (!this.selectedDOM) {
           this.$alert('暂无选中节点', '警告', {
             confirmButtonText: '确定'
           });
           return;
         }
+        /**
+         * 分类删除 ------------------------ to do
+         */
         this.nodes.splice(this.selectedDOM.idx, 1);
         this.selectedDOM = null;
       }
     },
     mounted() {
-      bus.$on('deleteNode', this.deleteNode);
+      bus.$on('deleteDOM', this.deleteDOM);
+      bus.$on('attachNode', this.attachNode);
+    },
+    beforeDestroy() {
+      bus.$off('deleteDOM');
+      bus.$off('attachNode');
     }
   };
 </script>
