@@ -259,10 +259,13 @@
           });
           return;
         }
-        /**
-         * 分类删除 ------------------------ to do
-         */
-        this.nodes.splice(this.selectedDOM.idx, 1);
+        const type = this.selectedType;
+        if (type === 'NODE') {
+          this.nodes.splice(this.selectedDOM.idx, 1);
+        }
+        if (type === 'LINE') {
+          this.lines.splice(this.selectedDOM.idx, 1);
+        }
         this.selectedDOM = null;
       }
     },
