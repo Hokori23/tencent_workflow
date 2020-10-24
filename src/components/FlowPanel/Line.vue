@@ -7,7 +7,7 @@
     @mousedown="handleSelectLine"
   >
     <!-- 2:自定义直线样式, 固定锚点 -->
-    <line
+    <!-- <line
       :x1="position.x1"
       :y1="position.y1"
       :x2="position.x2"
@@ -16,15 +16,31 @@
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
     >
-    </line>
-    <!-- 条件文字 -->
-    <!-- <text
-      style="fill: red"
-      :x="(position.x1 - position.x2) / 2"
-      :y="(position.y1 - position.y2) / 2"
+    </line> -->
+    <path
+      :d="`M${position.x1}, ${position.y1} L${position.x2}, ${position.y2}`"
+      :style="`stroke: black; stroke-width: 5; stroke-linecap: round`"
+      @mousedown="handleChangeTarget('LINE', true, idx)"
+      @mouseup="handleChangeTarget('LINE', false, idx)"
     >
-      {{ line.text }}
-    </text> -->
+    </path>
+    <!-- 条件文字 -->
+    <foreignObject
+      :width="width"
+      :height="height"
+      :x="~~(position.x1 - (position.x1 - position.x2) / 2 - width / 2)"
+      :y="~~(position.y1 - (position.y1 - position.y2) / 2 - height / 2)"
+      @mousedown="handleChangeTarget('LINE', true, idx)"
+      @mouseup="handleChangeTarget('LINE', false, idx)"
+      requiredExtensions="http://www.w3.org/1999/xhtml"
+    >
+      <el-input
+        ref="text"
+        v-model="line.text"
+        placeholder="请输入条件文字"
+        style="min-width: 100px"
+      />
+    </foreignObject>
   </g>
 </template>
 <script>
@@ -52,7 +68,9 @@
           y1: 0,
           x2: 0,
           y2: 0
-        }
+        },
+        width: 0,
+        height: 0
       };
     },
     methods: {
@@ -70,9 +88,7 @@
           state
         );
       },
-      init() {
-        // this.proxyLine = JSON.parse(JSON.stringify(this.line));
-        // const { start, end, start_anchor, end_anchor } = this.proxyLine;
+      async init() {
         const { start, end, start_anchor, end_anchor } = this.line;
         if (!start.width) {
           return;
@@ -104,6 +120,14 @@
 
         // 给Node.vue提供绝对坐标
         end.absolutePosition && (end.absolutePosition = this.position);
+
+        if (!this.$refs['text']) {
+          return;
+        }
+
+        const nowStyle = await getComputedStyle(this.$refs['text'].$el);
+        this.height = Number(nowStyle.height.split('px')[0]);
+        this.width = Number(nowStyle.width.split('px')[0]);
       }
     }
     // created() {

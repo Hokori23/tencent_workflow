@@ -22,7 +22,7 @@
       @mousedown="handleChangeTarget('NODE', idx)"
       requiredExtensions="http://www.w3.org/1999/xhtml"
     >
-      <el-button :type="btnType[node.type - 1]">
+      <el-button :type="btnType[node.type - 1]" ref="button">
         {{ btnType[node.type - 1] ? node.name : '节点类型错误' }}
       </el-button>
     </foreignObject>
@@ -135,28 +135,16 @@
         this.isListening = false;
         this.$refs['node'].onmousemove = null;
         if (isDef(this.nearstAnchor)) {
-          console.log(this.tempLine.start.name, this.node.name);
-          // if (this.tempLine.start === this.node) {
-          //   this.$alert('不能连接到节点本身', '警告', {
-          //     confirmButtonText: '确定'
-          //   });
-          // } else {
           // 吸附在锚点上
           this.tempLine.end = this.node;
           this.tempLine.end_anchor = this.nearstAnchor + 1;
           this.node.lines.push(this.tempLine);
           bus.$emit('attachNode');
-          // }
         }
         this.nearstAnchor = null;
       },
-      fixXY(p) {
-        return p % 5 > 2 ? p + (5 - (p % 5)) : p - (p % 5);
-      },
       async init() {
-        const nowStyle = await getComputedStyle(
-          this.$el.childNodes[1].firstChild
-        );
+        const nowStyle = await getComputedStyle(this.$refs['button'].$el);
         this.height = Number(nowStyle.height.split('px')[0]);
         this.width = Number(nowStyle.width.split('px')[0]);
         this.$set(this.node, 'height', this.height);
