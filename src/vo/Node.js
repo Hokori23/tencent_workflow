@@ -1,11 +1,11 @@
 export default class Node {
   /**
-   * 
-   * @param { number } id 
-   * @param { string } name 
-   * @param { Point } position 
-   * @param { Array<Line> } lines 
-   * @param { number } type 
+   *
+   * @param { number } id
+   * @param { string } name
+   * @param { Point } position
+   * @param { Array<Line> } lines
+   * @param { number } type
    */
   constructor(id, name, position, lines, type) {
     this.id = id;

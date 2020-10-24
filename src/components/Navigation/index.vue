@@ -11,7 +11,7 @@
           circle
           plain
           size="mini"
-          @click="handleDeleteNode"
+          @click="handleDeleteDOM"
         ></el-button>
       </div>
     </div>
@@ -25,6 +25,7 @@
           plain
           round
           size="mini"
+          :disabled="flow.id === currentFlowId"
           @click="handleFlowChange(flow.id)"
           >切换流程{{ flow.text }}</el-button
         >
@@ -34,7 +35,7 @@
 </template>
 <script>
   import Vue from 'vue';
-  
+
   import bus from '@/bus';
 
   export default {
@@ -49,8 +50,8 @@
           this.$emit('changeFlow', id);
         }
       },
-      handleDeleteNode() {
-        bus.$emit('deleteNode');
+      handleDeleteDOM() {
+        bus.$emit('deleteDOM');
       }
     }
   };

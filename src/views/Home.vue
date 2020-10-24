@@ -68,6 +68,7 @@
     },
     methods: {
       changeFlow(flowId) {
+        console.log('push', flowId);
         this.$router.push({ name: 'Home', params: { flowId } });
       }
     }

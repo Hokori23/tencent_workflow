@@ -48,7 +48,6 @@
   </aside>
 </template>
 <script>
-  import Vue from 'vue';
   export default {
     name: 'FlowPanel__Left',
     data() {
