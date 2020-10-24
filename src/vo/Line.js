@@ -1,11 +1,30 @@
-import Node from './Node';
 export default class Line {
-  constructor(text, start, start_anchor, end, end_anchor, type) {
+  /**
+   *
+   * @param { number } id
+   * @param { string } text
+   * @param { Array<Node> } start
+   * @param { Array<Node> } end
+   * @param { number } start_anchor // 1上; 2右; 3下; 4左;
+   * @param { number } end_anchor // 1上; 2右; 3下; 4左;
+   * @param { number } type
+   * @param { string } style  // JSON对象字符串（数据库）
+   */
+  constructor(id, text, start, end, start_anchor, end_anchor, type, style) {
+    this.id = id;
     this.text = text; // 条件文字
     this.start = start;
-    this.start_anchor = start_anchor;
     this.end = end;
+    this.start_anchor = start_anchor;
     this.end_anchor = end_anchor;
-    this.type = type; // 1: 默认连线样式, 动态锚点; 2: 自定义直线样式, 固定锚点; 3: 贝塞尔曲线, 固定锚点;
+    /**
+     * 1: 默认连线样式, 动态锚点;
+     * 2: 自定义直线样式, 固定锚点;
+     * 3: 贝塞尔曲线, 固定锚点;
+     */
+    this.type = type;
+    if (type === 2 && style) {
+      this.style = JSON.parse(style);
+    }
   }
 }

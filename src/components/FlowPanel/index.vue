@@ -18,11 +18,24 @@
       >
         <NodeComponent
           v-for="(node, idx) in nodes"
-          :key="idx"
+          :key="`node-${idx}`"
           :node="node"
           :idx="idx"
-          :selectedIdx="selectedNode ? selectedNode.idx : -1"
-          @selectNode="selectNode"
+          :selectedIdx="
+            selectedDOM && selectedType === 0 ? selectedDOM.idx : -1
+          "
+          @select="select"
+          @changeTarget="handleTargetChange"
+        />
+        <LineComponent
+          v-for="(line, idx) in lines"
+          :key="`line-${idx}`"
+          :line="line"
+          :idx="idx"
+          :selectedIdx="
+            selectedDOM && selectedType === 1 ? selectedDOM.idx : -1
+          "
+          @select="select"
           @changeTarget="handleTargetChange"
         />
       </svg>
@@ -30,23 +43,30 @@
         v-for="(node, idx) in nodes"
         :key="idx"
         :node="node"
-        @selectNode="selectNode"
+        @select="select"
       /> -->
     </figure>
-    <FlowPanelRight :selectedNode="selectedNode" @saveNode="saveNode" />
+    <FlowPanelRight
+      :selectedDOM="selectedDOM"
+      :selectedType="selectedType"
+      @saveNode="saveNode"
+    />
   </section>
 </template>
 <script>
-  import Vue from 'vue';
-
   import bus from '@/bus';
+
   import FlowPanelLeft from './Left.vue';
   import FlowPanelRight from './Right.vue';
-  import NodeComponent from '@/components/Node.vue';
+  import NodeComponent from '@/components/FlowPanel/Node.vue';
+  import LineComponent from '@/components/FlowPanel/Line.vue';
+
   import Node from '@/vo/Node';
+  import Line from '@/vo/Line';
   import Point from '@/vo/Point';
   // import FlowPanelMain from './Main.vue';
-
+  const node1 = new Node(1, '一个节点', new Point(150, 150), [], 1);
+  const node2 = new Node(2, '第二个节点', new Point(400, 200), [], 2);
   export default {
     name: 'FlowPanel',
     props: {
@@ -56,7 +76,8 @@
       FlowPanelLeft,
       // FlowPanelMain,
       FlowPanelRight,
-      NodeComponent
+      NodeComponent,
+      LineComponent
     },
     watch: {
       currentFlowId: {
@@ -65,40 +86,50 @@
            * 切换场景时清空状态
            * 比如当前选中节点
            */
-          this.selectedNode = null;
+          this.selectedDOM = null;
         }
       }
     },
     data() {
       return {
-        nodes: [
-          new Node(1, '一个节点', new Point(150, 150), [], 1),
-          new Node(2, '第二个节点', new Point(250, 200), [], 2)
-        ], // read from back-end
-        selectedNode: null,
-        nowTarget: null // 当前操作对象: [Node, Line]
+        nodes: [node1, node2], // read from back-end
+        lines: [new Line(1, '条件1', node1, node2, 2, 4, 2)],
+        selectedDOM: null,
+        selectedType: null, // ['NODE', 'LINE']
+        nowTarget: null, // 当前操作对象: [Node, Line]
+        tempLinePoint: null // 临时线头
       };
     },
     methods: {
-      selectNode(node) {
-        this.selectedNode = node;
-        this.selectedNode.idx = this.nodes.indexOf(node);
+      select(node, type) {
+        this.selectedDOM = node;
+        this.selectedType = type;
+        const map = {
+          NODE: this.nodes,
+          LINE: this.lines
+        };
+        const arr = map[type];
+        this.selectedDOM.idx = arr.indexOf(node);
       },
-      saveNode(node) {
-        for (let i = 0; i < this.nodes.length; i++) {
-          if (this.nodes[i].id === node.id) {
-            this.nodes.splice(i, 1, node);
+      saveNode(node, type) {
+        const map = {
+          NODE: this.nodes,
+          LINE: this.lines
+        };
+        const arr = map[type];
+        for (let i = 0; i < arr.length; i++) {
+          if (arr[i].id === node.id) {
+            arr.splice(i, 1, node);
             break;
           }
         }
         // 保存?
       },
-      handleTargetChange(nowTarget, state) {
-        if (state) {
-          this.nowTarget = nowTarget;
-        } else {
-          this.nowTarget = null;
-        }
+      handleTargetChange(nowTarget) {
+        this.nowTarget = nowTarget;
+        //  else {
+        //   this.nowTarget = null;
+        // }
       },
       drop(e) {
         let { newnodetype, label } = JSON.parse(
@@ -139,14 +170,15 @@
       },
       mousedown(e) {
         if (!this.nowTarget) {
-          this.selectedNode = null;
+          this.selectedDOM = null;
           return;
         }
-        const { type, idx, x, y } = this.nowTarget;
+        const { type } = this.nowTarget;
+        const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
         // 处理情况1 节点
         if (type === 'NODE') {
+          const { idx, x, y } = this.nowTarget;
           const { position } = this.nodes[idx];
-          const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
           this.$refs['flow-panel'].onmousemove = (e) => {
             position.x = e.clientX - offsetLeft - x;
             position.y = e.clientY - offsetTop - y;
@@ -155,22 +187,41 @@
         }
         // 处理情况2 节点锚点
         if (type === 'ANCHOR') {
-          console.log('锚点拖拽');
+          const { idx, node, position } = this.nowTarget;
+          const { x, y } = node.position;
+          // 起始点坐标
+          const { cx, cy } = position;
+          const tempNode = (this.tempLinePoint = JSON.parse(
+            JSON.stringify(node)
+          ));
+          // 临时从锚点拉扯出一条线
+          this.lines.push(new Line(null, '', node, tempNode, idx, idx, 1));
+          this.$refs['flow-panel'].onmousemove = (e) => {
+            tempNode.position.x = e.clientX - offsetLeft - (cx - x);
+            tempNode.position.y = e.clientY - offsetTop - (cy - y);
+          };
         }
       },
       mouseup(e) {
         this.$refs['flow-panel'].onmousemove = null;
-        console.log('up');
+        if (this.nowTarget) {
+          const { type, idx, x, y } = this.nowTarget;
+          // 处理情况2 节点锚点
+          if (type === 'ANCHOR') {
+            console.log('锚点拖拽');
+          }
+          this.nowTarget = null;
+        }
       },
       deleteNode() {
-        if (!this.selectedNode) {
+        if (!this.selectedDOM) {
           this.$alert('暂无选中节点', '警告', {
             confirmButtonText: '确定'
           });
           return;
         }
-        this.nodes.splice(this.selectedNode.idx, 1);
-        this.selectedNode = null;
+        this.nodes.splice(this.selectedDOM.idx, 1);
+        this.selectedDOM = null;
       }
     },
     mounted() {

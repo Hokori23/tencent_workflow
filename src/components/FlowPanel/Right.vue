@@ -1,7 +1,14 @@
 <template>
   <aside class="flow-panel__right">
     <div class="flow-panel__right__title">编辑</div>
-    <div v-if="selectedNode" class="flow-panel__right__content">
+    <div
+      v-if="!selectedDOM"
+      class="flow-panel__right__content"
+      style="text-align: center; margin-top: 200px"
+    >
+      <h3>暂无选中节点</h3>
+    </div>
+    <div v-else-if="selectedType === 'NODE'" class="flow-panel__right__content">
       <div>
         类型
         <el-input
@@ -47,31 +54,49 @@
         <el-button size="small" type="primary" @click="save"> 保存 </el-button>
       </div>
     </div>
-    <div
-      v-else
-      class="flow-panel__right__content"
-      style="text-align: center; margin-top: 200px"
-    >
-      <h3>暂无选中节点</h3>
+    <div v-else-if="selectedType === 'LINE'" class="flow-panel__right__content">
+      <div>
+        文字
+        <el-input style="margin-top: 10px" size="small" v-model="node.text">
+        </el-input>
+      </div>
+      <div>
+        连线类别
+        <el-select style="margin-top: 10px" size="small" v-model="node.type">
+          <el-option
+            v-for="item in LineTypeMap"
+            :key="item"
+            :label="item"
+            :value="item"
+          >
+          </el-option>
+        </el-select>
+      </div>
+      <div class="flow-panel__right__footer">
+        <el-button size="small" plain @click="reset"> 重置 </el-button>
+        <el-button size="small" type="primary" @click="save"> 保存 </el-button>
+      </div>
     </div>
   </aside>
 </template>
 <script>
-  import Vue from 'vue';
-
+  import Node from '@/vo/Node';
+  import Line from '@/vo/Line';
   import Point from '@/vo/Point';
+
   export default {
     name: 'FlowPanel__Right',
     props: {
-      selectedNode: Object
+      selectedDOM: Object,
+      selectedType: String //['NODE', 'LINE']
     },
     watch: {
-      selectedNode: {
+      selectedDOM: {
         handler(val) {
           this.formatProp();
         },
-        deep: true,
-        immediate: true
+        deep: true
+        // immediate: true
       }
     },
     computed: {
@@ -86,7 +111,11 @@
     },
     data() {
       return {
-        node: {}
+        node: {},
+        type: null,
+        LineTypeMap: ['默认连线样式', '自定义直线样式', '贝塞尔曲线'],
+        Node,
+        Line
       };
     },
     methods: {
@@ -94,19 +123,25 @@
         this.formatProp();
       },
       save() {
-        /**
-         * $emit here
-         */
         const node = JSON.parse(JSON.stringify(this.node));
-        const { position } = node;
-        node.position = new Point(Number(position.x), Number(position.y));
-        this.$emit('saveNode', node);
+        const type = this.selectedType;
+        if (type === 'NODE') {
+          const { position } = node;
+          node.position = new Point(Number(position.x), Number(position.y));
+        } else if (type === 'LINE') {
+          node.type = this.LineTypeMap.indexOf(node.type) + 1;
+        }
+        this.$emit('saveNode', node, type);
       },
       formatProp() {
-        if (!this.selectedNode) {
+        if (!this.selectedDOM) {
           return;
         }
-        this.node = JSON.parse(JSON.stringify(this.selectedNode));
+        this.node = JSON.parse(JSON.stringify(this.selectedDOM));
+
+        // line's select label
+        this.selectedType === 'LINE' &&
+          (this.node.type = this.LineTypeMap[this.node.type - 1]);
       }
     }
   };
