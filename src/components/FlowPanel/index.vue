@@ -123,11 +123,10 @@
         const arr = map[type];
         for (let i = 0; i < arr.length; i++) {
           if (arr[i].id === node.id) {
-            arr.splice(i, 1, node);
+            Object.assign(arr[i], node);
             break;
           }
         }
-        // 保存 ----------- to do
       },
       handleTargetChange(nowTarget) {
         this.nowTarget = nowTarget;

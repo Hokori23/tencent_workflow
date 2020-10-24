@@ -126,9 +126,11 @@
         const node = JSON.parse(JSON.stringify(this.node));
         const type = this.selectedType;
         if (type === 'NODE') {
-          const { position } = node;
-          node.position = new Point(Number(position.x), Number(position.y));
+          node.lines = this.selectedDOM.lines;
         } else if (type === 'LINE') {
+          const { end, start } = this.selectedDOM;
+          node.end = end;
+          node.start = start;
           node.type = this.LineTypeMap.indexOf(node.type) + 1;
         }
         this.$emit('saveNode', node, type);
@@ -145,7 +147,6 @@
           return;
         }
         if (type === 'LINE') {
-          console.log(this.selectedDOM);
           this.node.type = this.LineTypeMap[this.node.type - 1];
           // style clone -------------- to do
         }
