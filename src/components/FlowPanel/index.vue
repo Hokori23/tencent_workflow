@@ -22,7 +22,7 @@
           :node="node"
           :idx="idx"
           :selectedIdx="
-            selectedDOM && selectedType === 0 ? selectedDOM.idx : -1
+            selectedDOM && selectedType === 'NODE' ? selectedDOM.idx : -1
           "
           :tempLinePoint="tempLinePoint"
           :tempLine="tempLine"
@@ -35,7 +35,7 @@
           :line="line"
           :idx="idx"
           :selectedIdx="
-            selectedDOM && selectedType === 1 ? selectedDOM.idx : -1
+            selectedDOM && selectedType === 'LINE' ? selectedDOM.idx : -1
           "
           @select="select"
           @changeTarget="handleTargetChange"
@@ -94,8 +94,10 @@
     },
     data() {
       return {
-        nodes: [node1, node2], // read from back-end
-        lines: [new Line(1, '条件1', node1, node2, 2, 4, 2)],
+        // nodes: [node1, node2], // read from back-end
+        nodes: [],
+        lines: [],
+        // lines: [new Line(1, '条件1', node1, node2, 2, 4, 2)],
         selectedDOM: null,
         selectedType: null, // ['NODE', 'LINE']
         nowTarget: null, // 当前操作对象: [Node, Line]
@@ -203,7 +205,8 @@
             JSON.stringify(node.position)
           );
           tempLinePoint.position = tempLinePoinstPosition;
-          tempLinePoint.absolutePosition = true; // 给Line.vue标志，用于附加absolutePosition
+          // 给Line.vue标志，用于附加absolutePosition && 隐藏两端线头
+          tempLinePoint.absolutePosition = true;
 
           // 临时从锚点拉扯出一条线
           const tempLine = (this.tempLine = new Line(
@@ -252,7 +255,8 @@
         this.isAttachedNode = true;
       },
       deleteDOM() {
-        if (!this.selectedDOM) {
+        const selectedDOM = this.selectedDOM;
+        if (!selectedDOM) {
           this.$alert('暂无选中节点', '警告', {
             confirmButtonText: '确定'
           });
@@ -260,10 +264,31 @@
         }
         const type = this.selectedType;
         if (type === 'NODE') {
-          this.nodes.splice(this.selectedDOM.idx, 1);
+          // 删除该节点上所有的线
+          selectedDOM.lines.forEach((line) => {
+            let node;
+            if (line.start !== selectedDOM) {
+              node = line.start;
+            } else {
+              node = line.end;
+            }
+            // 删除线上另一个结点的引用
+            node.lines.splice(node.lines.indexOf(line), 1);
+            // 删除线
+            this.lines.splice(this.lines.indexOf(line), 1);
+          });
+          // 删除该节点
+          this.nodes.splice(selectedDOM.idx, 1);
+          return;
         }
         if (type === 'LINE') {
-          this.lines.splice(this.selectedDOM.idx, 1);
+          // 删除跟该线相关节点上的引用
+          const { start, end } = selectedDOM;
+          const startIdx = start.lines.indexOf(selectedDOM);
+          const endIdx = end.lines.indexOf(selectedDOM);
+          start.lines.splice(startIdx, 1);
+          end.lines.splice(endIdx, 1);
+          this.lines.splice(selectedDOM.idx, 1);
         }
         this.selectedDOM = null;
       }

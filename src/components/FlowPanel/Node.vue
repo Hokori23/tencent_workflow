@@ -138,7 +138,8 @@
           // 吸附在锚点上
           this.tempLine.end = this.node;
           this.tempLine.end_anchor = this.nearstAnchor + 1;
-          this.node.lines.push(this.tempLine);
+          this.tempLine.start.lines.push(this.tempLine);
+          this.tempLine.end.lines.push(this.tempLine);
           bus.$emit('attachNode');
         }
         this.nearstAnchor = null;
