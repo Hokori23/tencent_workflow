@@ -19,7 +19,6 @@
     </line> -->
     <path
       :d="`M${position.x1}, ${position.y1} L${position.x2}, ${position.y2}`"
-      :style="`stroke: black; stroke-width: 5; stroke-linecap: round`"
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
     >
@@ -28,8 +27,8 @@
     <foreignObject
       :width="width"
       :height="height"
-      :x="~~(position.x1 - (position.x1 - position.x2) / 2 - width / 2)"
-      :y="~~(position.y1 - (position.y1 - position.y2) / 2 - height / 2)"
+      :x="position.x1 - (position.x1 - position.x2) / 2 - width / 2"
+      :y="position.y1 - (position.y1 - position.y2) / 2 - height / 2"
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
       requiredExtensions="http://www.w3.org/1999/xhtml"
@@ -41,6 +40,22 @@
         style="min-width: 100px"
       />
     </foreignObject>
+
+    <!-- 线两端 -->
+    <g class="flow-panel__line__point" v-if="!line.end.absolutePosition">
+      <circle
+        :cx="position.x1"
+        :cy="position.y1"
+        @mousedown="handleChangeTarget('POINT', true, idx, 'start')"
+        @mouseup="handleChangeTarget('POINT', false, idx, 'start')"
+      />
+      <circle
+        :cx="position.x2"
+        :cy="position.y2"
+        @mousedown="handleChangeTarget('POINT', true, idx, 'end')"
+        @mouseup="handleChangeTarget('POINT', false, idx, 'end')"
+      />
+    </g>
   </g>
 </template>
 <script>
@@ -137,6 +152,36 @@
 </script>
 <style lang="scss" scoped>
   .flow-panel__line {
+    path {
+      stroke: #e6e6e6;
+      stroke-width: 2;
+      stroke-linecap: round;
+      &:hover {
+        stroke: ccc;
+        stroke-width: 4;
+      }
+    }
     cursor: pointer;
+    &__point circle {
+      fill: #ccc;
+      stroke: #ddd;
+      r: 3;
+      &:hover {
+        fill: #ddd;
+        stroke: #ccc;
+        r: 7;
+      }
+    }
+    &--active {
+      path {
+        stroke: ccc;
+        stroke-width: 4;
+      }
+      .flow-panel__line__point circle {
+        fill: #ddd;
+        stroke: #ccc;
+        r: 7;
+      }
+    }
   }
 </style>
