@@ -27,7 +27,7 @@
           :tempLinePoint="tempLinePoint"
           :tempLine="tempLine"
           @select="select"
-          @changeTarget="handleTargetChange"
+          @changeTarget="changeTarget"
         />
         <LineComponent
           v-for="(line, idx) in lines"
@@ -38,7 +38,7 @@
             selectedDOM && selectedType === 'LINE' ? selectedDOM.idx : -1
           "
           @select="select"
-          @changeTarget="handleTargetChange"
+          @changeTarget="changeTarget"
         />
       </svg>
       <!-- <NodeComponent
@@ -103,7 +103,8 @@
         nowTarget: null, // 当前操作对象: [Node, Line]
         tempLinePoint: null, // 临时线头
         tempLine: null, // 临时线
-        isAttachedNode: false // 用于判断是否触发了EventBus的'attachNode'事件
+        isAttachedNode: false, // 用于判断是否触发了EventBus的'attachNode'事件
+        preLinePoint: null // 拖动已存在的线时临时保存原节点 //test
       };
     },
     methods: {
@@ -130,7 +131,7 @@
           }
         }
       },
-      handleTargetChange(nowTarget) {
+      changeTarget(nowTarget) {
         this.nowTarget = nowTarget;
       },
       drop(e) {
@@ -177,6 +178,7 @@
         }
         const { type } = this.nowTarget;
         const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
+
         // 处理情况1 节点
         if (type === 'NODE') {
           const { idx, x, y } = this.nowTarget;
@@ -187,6 +189,7 @@
           };
           return;
         }
+
         // 处理情况2 节点锚点
         if (type === 'ANCHOR') {
           /**
@@ -197,9 +200,6 @@
           const { idx, node, position } = this.nowTarget;
           const { x, y } = node.position; // 当前节点(左上)坐标
           const { cx, cy } = position; // 锚点起始点坐标
-          // const tempLinePoint = (this.tempLinePoint = JSON.parse(
-          //   JSON.stringify(node)
-          // ));
           const tempLinePoint = (this.tempLinePoint = Object.assign({}, node));
           const tempLinePoinstPosition = JSON.parse(
             JSON.stringify(node.position)
@@ -224,6 +224,54 @@
             tempLinePoint.position.x = e.clientX - offsetLeft - (cx - x);
             tempLinePoint.position.y = e.clientY - offsetTop - (cy - y);
           };
+          return;
+        }
+
+        // 处理情况3 线端
+        if (type === 'POINT') {
+          const { idx, position, line, pointType } = this.nowTarget;
+          const node = this.nowTarget.line[pointType]; // 当前线端的节点
+
+          // Copy一个临时浮动节点
+          const tempLinePoint = (this.tempLinePoint = {});
+          this.tempLine = line;
+          Object.keys(node).forEach((key) => {
+            if (key === 'lines') {
+              return;
+            }
+            if (key === 'position') {
+              this.$set(
+                this.tempLinePoint,
+                key,
+                JSON.parse(JSON.stringify(node[key]))
+              );
+              return;
+            }
+            if (key === `${pointType}_anchor`) {
+              this.$set(this.tempLinePoint, key, 1);
+              return;
+            }
+            this.$set(this.tempLinePoint, key, node[key]);
+          });
+          const { x, y } = tempLinePoint.position; // 当前临时节点(左上)坐标
+          const { cx, cy } = position; // 线端起始点坐标
+
+          // 将当前节点换成临时浮动节点
+          line[pointType] = tempLinePoint;
+          // 给Line.vue标志，用于附加absolutePosition && 隐藏两端线头
+          tempLinePoint.absolutePosition = true;
+
+          const startNode = line.start;
+          const endNode = line.end;
+          bus.$emit(
+            'computeNearestAnchor',
+            idx,
+            node === startNode ? endNode : startNode
+          );
+          this.$refs['flow-panel'].onmousemove = (e) => {
+            tempLinePoint.position.x = e.clientX - offsetLeft - (cx - x);
+            tempLinePoint.position.y = e.clientY - offsetTop - (cy - y);
+          };
         }
       },
       mouseup(e) {
@@ -240,15 +288,24 @@
           } else if (this.tempLinePoint && this.tempLine) {
             this.lines.pop();
           }
-
-          // 清理临时数据
-          this.tempLinePoint && delete this.tempLinePoint.absolutePosition;
-          this.tempLine = this.tempLinePoint = null;
         }
         // 处理情况2 节点锚点
-        if (type === 'ANCHOR') {
-          console.log('取消锚点拖拽');
+        else if (type === 'ANCHOR') {
+          bus.$emit('stopComputingNearestAnchor');
+          if (this.isAttachedNode) {
+            this.isAttachedNode = false;
+          } else if (this.tempLinePoint && this.tempLine) {
+            this.selectedDOM = this.tempLine;
+            this.deleteDOM();
+          }
         }
+        // 处理情况3 线端
+        else if (type === 'POINT') {
+          bus.$emit('stopComputingNearestAnchor');
+        }
+        // 清理临时数据
+        this.tempLinePoint && delete this.tempLinePoint.absolutePosition;
+        this.tempLine = this.tempLinePoint = null;
         this.nowTarget = null;
       },
       attachNode() {

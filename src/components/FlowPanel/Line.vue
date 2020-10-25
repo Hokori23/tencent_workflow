@@ -93,12 +93,26 @@
       handleSelectLine(e) {
         this.$emit('select', this.line, 'LINE');
       },
-      handleChangeTarget(type, state, idx) {
+      handleChangeTarget(type, state, idx, pointType) {
+        const { x1, y1, x2, y2 } = this.position;
+        const position =
+          pointType === 'start'
+            ? {
+                cx: x1,
+                cy: y1
+              }
+            : {
+                cx: x2,
+                cy: y2
+              };
         this.$emit(
           'changeTarget',
           {
             type,
-            idx
+            idx,
+            position,
+            line: this.line,
+            pointType
           },
           state
         );
