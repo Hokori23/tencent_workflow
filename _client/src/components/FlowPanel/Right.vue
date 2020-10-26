@@ -176,19 +176,22 @@
         if (type === 'LINE') {
           node.type = this.LineTypeMap.indexOf(node.type) + 1;
           if (node.type === 2 && this.selectedDOM.type !== node.type) {
-            node.style = {
-              path: {
-                stroke: '#e6e6e6',
-                strokeWidth: 2
-              },
-              point: {
-                fill: '#ccc',
-                stroke: '#ddd'
-              }
-            };
+            node.style = this.defaultStyle();
           }
         }
         this.$emit('saveNode', this.selectedDOM, node, type);
+      },
+      defaultStyle() {
+        return new Object({
+          path: {
+            stroke: '#e6e6e6',
+            strokeWidth: 2
+          },
+          point: {
+            fill: '#ccc',
+            stroke: '#ddd'
+          }
+        });
       },
       formatProp() {
         if (!this.selectedDOM) {
@@ -205,10 +208,15 @@
         if (type === 'LINE') {
           this.node.type = this.LineTypeMap[this.node.type - 1];
           if (this.selectedDOM.type === 2) {
-            this.node.style = JSON.parse(JSON.stringify(this.selectedDOM.style));
+            this.node.style = this.isEmptyObject(this.node.style)
+              ? this.defaultStyle()
+              : JSON.parse(JSON.stringify(this.selectedDOM.style));
           }
           // style clone -------------- to do
         }
+      },
+      isEmptyObject(obj) {
+        return Object.keys(obj).length === 0;
       }
     }
   };
