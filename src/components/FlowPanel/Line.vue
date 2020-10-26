@@ -2,7 +2,8 @@
   <g
     :class="{
       'flow-panel__line': true,
-      'flow-panel__line--active': selectedIdx === idx
+      'flow-panel__line--active': selectedIdx === idx,
+      'flow-panel__line--non-select': Boolean(tempLinePoint)
     }"
     @mousedown="handleSelectLine"
   >
@@ -64,7 +65,8 @@
     props: {
       line: Object,
       idx: Number,
-      selectedIdx: Number
+      selectedIdx: Number,
+      tempLinePoint: Object
     },
     watch: {
       line: {
@@ -196,6 +198,9 @@
         stroke: #ccc;
         r: 7;
       }
+    }
+    &--non-select {
+      user-select: none;
     }
   }
 </style>

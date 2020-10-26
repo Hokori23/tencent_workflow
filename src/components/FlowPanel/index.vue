@@ -37,6 +37,7 @@
           :selectedIdx="
             selectedDOM && selectedType === 'LINE' ? selectedDOM.idx : -1
           "
+          :tempLinePoint="tempLinePoint"
           @select="select"
           @changeTarget="changeTarget"
         />
@@ -236,9 +237,6 @@
           const tempLinePoint = (this.tempLinePoint = {});
           this.tempLine = line;
           Object.keys(node).forEach((key) => {
-            if (key === 'lines') {
-              return;
-            }
             if (key === 'position') {
               this.$set(
                 this.tempLinePoint,
@@ -295,8 +293,12 @@
           if (this.isAttachedNode) {
             this.isAttachedNode = false;
           } else if (this.tempLinePoint && this.tempLine) {
-            this.selectedDOM = this.tempLine;
+            const { selectedDOM, selectedType } = this;
+            this.select(this.tempLine, 'LINE');
             this.deleteDOM();
+            // 复原当前选中状态
+            this.selectedDOM = selectedDOM;
+            this.selectedType = selectedType;
           }
         }
         // 处理情况3 线端
@@ -330,9 +332,11 @@
               node = line.end;
             }
             // 删除线上另一个结点的引用
-            node.lines.splice(node.lines.indexOf(line), 1);
+            const idx1 = node.lines.indexOf(line);
+            idx1 !== -1 && node.lines.splice(idx1, 1);
             // 删除线
-            this.lines.splice(this.lines.indexOf(line), 1);
+            const idx2 = this.lines.indexOf(line);
+            idx2 !== -1 && this.lines.splice(idx2, 1);
           });
           // 删除该节点
           this.nodes.splice(selectedDOM.idx, 1);
@@ -343,8 +347,8 @@
           const { start, end } = selectedDOM;
           const startIdx = start.lines.indexOf(selectedDOM);
           const endIdx = end.lines.indexOf(selectedDOM);
-          start.lines.splice(startIdx, 1);
-          end.lines.splice(endIdx, 1);
+          startIdx !== -1 && start.lines.splice(startIdx, 1);
+          endIdx !== -1 && end.lines.splice(endIdx, 1);
           this.lines.splice(selectedDOM.idx, 1);
         }
         this.selectedDOM = null;
