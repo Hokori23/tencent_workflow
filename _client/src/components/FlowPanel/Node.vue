@@ -112,7 +112,6 @@
         }
       },
       computeNearestAnchor(idx, node) {
-        console.log('computeNearestAnchor', idx);
         this.isListening = true;
         if (node === this.node) {
           return;

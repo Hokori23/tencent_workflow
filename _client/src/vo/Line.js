@@ -23,8 +23,22 @@ export default class Line {
      * 3: 贝塞尔曲线, 固定锚点;
      */
     this.type = type;
+    /**
+     * style: {
+     *    path: {
+     *      stroke: string,
+     *      strokeWidth: number,
+     *    },
+     *    point: {
+     *      fill: string,
+     *      stroke: string
+     *    }
+     * }
+     */
     if (type === 2 && style) {
       this.style = JSON.parse(style);
+    } else {
+      this.style = {};
     }
   }
 }
