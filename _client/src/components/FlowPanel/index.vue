@@ -89,6 +89,8 @@
            * 切换场景时清空状态
            * 比如当前选中节点
            */
+          this.selectedDOM = this.nodes = this.lines = null;
+
           // 获取数据
           const { code, message, data } = await getFlow(this.currentFlowId);
 
@@ -96,25 +98,61 @@
             return;
           }
           // 处理数据
-          const { nodes, lines } = data;
+          let { nodes, lines } = data;
           this.nodes = nodes.map((node) => {
             const { id, flow_id, name, type, x, y } = node;
             const position = new Point(x, y);
             return new Node(id, flow_id, name, position, [], type);
           });
-          console.log(code, message, data);
-          console.log(message);
-          this.selectedDOM = null;
+          nodes = this.nodes;
+          this.lines = lines.map((line) => {
+            const {
+              id,
+              flow_id,
+              text,
+              start_id,
+              end_id,
+              start_anchor,
+              end_anchor,
+              type,
+              style
+            } = line;
+            // 查找startNode, endNode
+            let start,
+              end,
+              count = 0;
+            for (let i = 0; i < nodes.length; i++) {
+              if (nodes[i].id === start_id) {
+                count++;
+                start = nodes[i];
+              } else if (nodes[i].id === end_id) {
+                count++;
+                end = nodes[i];
+              }
+              if (count === 2) {
+                break;
+              }
+            }
+            return new Line(
+              id,
+              flow_id,
+              text,
+              start,
+              end,
+              start_anchor,
+              end_anchor,
+              type,
+              style
+            );
+          });
         },
         immediate: true
       }
     },
     data() {
       return {
-        // nodes: [node1, node2], // read from back-end
         nodes: [],
         lines: [],
-        // lines: [new Line(1, '条件1', node1, node2, 2, 4, 2)],
         selectedDOM: null,
         selectedType: null, // ['NODE', 'LINE']
         nowTarget: null, // 当前操作对象: [Node, Line]
@@ -190,7 +228,6 @@
         e.preventDefault();
       },
       mousedown(e) {
-        console.log(this.nodes[0]);
         if (!this.nowTarget) {
           this.selectedDOM = null;
           return;
@@ -378,8 +415,8 @@
       bus.$on('attachNode', this.attachNode);
     },
     beforeDestroy() {
-      bus.$off('deleteDOM');
-      bus.$off('attachNode');
+      bus.$off('deleteDOM', this.deleteDOM);
+      bus.$off('attachNode', this.attachNode);
     }
   };
 </script>
