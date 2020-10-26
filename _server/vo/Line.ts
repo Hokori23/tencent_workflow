@@ -1,8 +1,11 @@
 import { DataTypes, Model } from 'sequelize';
 import DB from '@database';
 
+import { Flow, Node } from '@vo';
+
 interface LineAttributes {
   id: number;
+  flow_id: number;
   text: string; // 节点名
   start_id: number;
   end_id: number;
@@ -16,6 +19,7 @@ interface LineAttributes {
 
 class Line extends Model implements LineAttributes {
   public id!: number;
+  public flow_id!: number;
   public text!: string;
   public start_id!: number;
   public end_id!: number;
@@ -39,18 +43,38 @@ Line.init(
       autoIncrement: true,
       comment: '自增字段（主键）'
     },
+    flow_id: {
+      type: DataTypes.INTEGER.UNSIGNED,
+      references: {
+        model: Flow,
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
+      comment: 'Flow表外键'
+    },
     text: {
       type: DataTypes.STRING(20),
       comment: '条件文字'
     },
     start_id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      references: {
+        model: Node,
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
       comment: 'Node表外键'
     },
     end_id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      references: {
+        model: Node,
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
       comment: 'Node表外键'
     },
     start_anchor: {

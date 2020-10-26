@@ -1,6 +1,8 @@
 import { DataTypes, Model } from 'sequelize';
 import DB from '@database';
 
+import { Flow } from '@vo';
+
 interface NodeAttributes {
   id: number;
   flow_id: number;
@@ -29,7 +31,12 @@ Node.init(
     },
     flow_id: {
       type: DataTypes.INTEGER.UNSIGNED,
-      allowNull: false,
+      references: {
+        model: Flow,
+        key: 'id'
+      },
+      onDelete: 'CASCADE',
+      onUpdate: 'CASCADE',
       comment: 'Flow表外键'
     },
     name: {
