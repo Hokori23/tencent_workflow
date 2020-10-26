@@ -123,17 +123,12 @@
         this.formatProp();
       },
       save() {
-        const node = JSON.parse(JSON.stringify(this.node));
         const type = this.selectedType;
-        if (type === 'NODE') {
-          node.lines = this.selectedDOM.lines;
-        } else if (type === 'LINE') {
-          const { end, start } = this.selectedDOM;
-          node.end = end;
-          node.start = start;
+        const node = Object.assign({}, this.node);
+        if (type === 'LINE') {
           node.type = this.LineTypeMap.indexOf(node.type) + 1;
         }
-        this.$emit('saveNode', node, type);
+        this.$emit('saveNode', this.selectedDOM, node, type);
       },
       formatProp() {
         if (!this.selectedDOM) {

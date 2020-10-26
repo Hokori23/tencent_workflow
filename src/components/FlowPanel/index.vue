@@ -119,14 +119,14 @@
         const arr = map[type];
         this.selectedDOM.idx = arr.indexOf(node);
       },
-      saveNode(node, type) {
+      saveNode(preNode, node, type) {
         const map = {
           NODE: this.nodes,
           LINE: this.lines
         };
         const arr = map[type];
         for (let i = 0; i < arr.length; i++) {
-          if (arr[i].id === node.id) {
+          if (preNode === arr[i]) {
             Object.assign(arr[i], node);
             break;
           }
