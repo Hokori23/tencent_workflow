@@ -22,7 +22,7 @@
       @mousedown="handleChangeTarget('NODE', idx)"
       requiredExtensions="http://www.w3.org/1999/xhtml"
     >
-      <el-button :type="btnType[node.type - 1]" ref="button">
+      <el-button ref="button" :type="btnType[node.type - 1]" :icon="node.ico">
         {{ btnType[node.type - 1] ? node.name : '节点类型错误' }}
       </el-button>
     </foreignObject>
@@ -112,6 +112,7 @@
         }
       },
       computeNearestAnchor(idx, node) {
+        console.log('computeNearestAnchor', idx);
         this.isListening = true;
         if (node === this.node) {
           return;
@@ -158,8 +159,8 @@
       this.init();
     },
     beforeDestroy() {
-      bus.$off('computeNearestAnchor');
-      bus.$off('stopComputingNearestAnchor');
+      bus.$off('computeNearestAnchor', this.computeNearestAnchor);
+      bus.$off('stopComputingNearestAnchor', this.stopComputingNearestAnchor);
     }
   };
 </script>
