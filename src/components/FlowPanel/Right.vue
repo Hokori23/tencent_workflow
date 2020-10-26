@@ -8,6 +8,8 @@
     >
       <h3>暂无选中节点</h3>
     </div>
+
+    <!-- 节点信息 -->
     <div v-else-if="selectedType === 'NODE'" class="flow-panel__right__content">
       <div>
         类型
@@ -54,6 +56,8 @@
         <el-button size="small" type="primary" @click="save"> 保存 </el-button>
       </div>
     </div>
+
+    <!-- 连线信息 -->
     <div v-else-if="selectedType === 'LINE'" class="flow-panel__right__content">
       <div>
         文字
@@ -71,6 +75,50 @@
           >
           </el-option>
         </el-select>
+      </div>
+      <div v-if="selectedDOM.type === 2">
+        <h4 style="transform: translateX(-25px); margin: 15px 0 10px 0">
+          连线样式
+        </h4>
+        <div>
+          颜色
+          <el-input
+            style="margin-top: 10px"
+            size="small"
+            v-model="node.style.path.stroke"
+          >
+          </el-input>
+        </div>
+        <div>
+          宽度
+          <el-input
+            style="margin-top: 10px"
+            size="small"
+            v-model="node.style.path.strokeWidth"
+          >
+          </el-input>
+        </div>
+        <h4 style="transform: translateX(-25px); margin: 15px 0 10px 0">
+          端点样式
+        </h4>
+        <div>
+          填充颜色
+          <el-input
+            style="margin-top: 10px"
+            size="small"
+            v-model="node.style.point.fill"
+          >
+          </el-input>
+        </div>
+        <div>
+          边框颜色
+          <el-input
+            style="margin-top: 10px"
+            size="small"
+            v-model="node.style.point.stroke"
+          >
+          </el-input>
+        </div>
       </div>
       <div class="flow-panel__right__footer">
         <el-button size="small" plain @click="reset"> 重置 </el-button>
@@ -127,6 +175,18 @@
         const node = Object.assign({}, this.node);
         if (type === 'LINE') {
           node.type = this.LineTypeMap.indexOf(node.type) + 1;
+          if (node.type === 2 && this.selectedDOM.type !== node.type) {
+            node.style = {
+              path: {
+                stroke: '#e6e6e6',
+                strokeWidth: 2
+              },
+              point: {
+                fill: '#ccc',
+                stroke: '#ddd'
+              }
+            };
+          }
         }
         this.$emit('saveNode', this.selectedDOM, node, type);
       },
@@ -137,12 +197,16 @@
         const type = this.selectedType;
         this.node = Object.assign({}, this.selectedDOM);
         if (type === 'NODE') {
-          const position = JSON.parse(JSON.stringify(this.selectedDOM.position));
-          this.node.position = position;
+          this.node.position = JSON.parse(
+            JSON.stringify(this.selectedDOM.position)
+          );
           return;
         }
         if (type === 'LINE') {
           this.node.type = this.LineTypeMap[this.node.type - 1];
+          if (this.selectedDOM.type === 2) {
+            this.node.style = JSON.parse(JSON.stringify(this.selectedDOM.style));
+          }
           // style clone -------------- to do
         }
       }

@@ -22,6 +22,7 @@
       :d="`M${position.x1}, ${position.y1} L${position.x2}, ${position.y2}`"
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
+      :style="line.type === 2 ? line.style.path : false"
     >
     </path>
     <!-- 条件文字 -->
@@ -37,8 +38,8 @@
       <el-input
         ref="text"
         v-model="line.text"
-        placeholder="请输入条件文字"
-        style="min-width: 100px"
+        size="small"
+        style="min-width: 80px"
       />
     </foreignObject>
 
@@ -49,12 +50,14 @@
         :cy="position.y1"
         @mousedown="handleChangeTarget('POINT', true, idx, 'start')"
         @mouseup="handleChangeTarget('POINT', false, idx, 'start')"
+        :style="line.type === 2 ? line.style.point : false"
       />
       <circle
         :cx="position.x2"
         :cy="position.y2"
         @mousedown="handleChangeTarget('POINT', true, idx, 'end')"
         @mouseup="handleChangeTarget('POINT', false, idx, 'end')"
+        :style="line.type === 2 ? line.style.point : false"
       />
     </g>
   </g>
@@ -161,9 +164,6 @@
         this.width = Number(nowStyle.width.split('px')[0]);
       }
     }
-    // created() {
-    //   this.init();
-    // }
   };
 </script>
 <style lang="scss" scoped>
@@ -185,7 +185,7 @@
       &:hover {
         fill: #ddd;
         stroke: #ccc;
-        r: 7;
+        r: 5;
       }
     }
     &--active {
@@ -196,7 +196,7 @@
       .flow-panel__line__point circle {
         fill: #ddd;
         stroke: #ccc;
-        r: 7;
+        r: 5;
       }
     }
     &--non-select {
