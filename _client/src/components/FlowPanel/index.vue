@@ -67,9 +67,10 @@
   import Node from '@/vo/Node';
   import Line from '@/vo/Line';
   import Point from '@/vo/Point';
-  // import FlowPanelMain from './Main.vue';
-  const node1 = new Node(1, '一个节点', new Point(0, 0), [], 1);
-  const node2 = new Node(2, '第二个节点', new Point(150, 150), [], 2);
+
+  import { getFlow, updateFlow } from '@/api';
+  import { dealWithResultCode } from '@/utils';
+
   export default {
     name: 'FlowPanel',
     props: {
@@ -77,20 +78,35 @@
     },
     components: {
       FlowPanelLeft,
-      // FlowPanelMain,
       FlowPanelRight,
       NodeComponent,
       LineComponent
     },
     watch: {
       currentFlowId: {
-        handler(val) {
+        async handler(val) {
           /**
            * 切换场景时清空状态
            * 比如当前选中节点
            */
+          // 获取数据
+          const { code, message, data } = await getFlow(this.currentFlowId);
+
+          if (code) {
+            return;
+          }
+          // 处理数据
+          const { nodes, lines } = data;
+          this.nodes = nodes.map((node) => {
+            const { id, flow_id, name, type, x, y } = node;
+            const position = new Point(x, y);
+            return new Node(id, flow_id, name, position, [], type);
+          });
+          console.log(code, message, data);
+          console.log(message);
           this.selectedDOM = null;
-        }
+        },
+        immediate: true
       }
     },
     data() {
@@ -162,6 +178,7 @@
         this.nodes.push(
           new Node(
             null,
+            this.currentFlowId,
             label,
             new Point(e.clientX - offsetLeft - 50, e.clientY - offsetTop - 20),
             [],
@@ -173,6 +190,7 @@
         e.preventDefault();
       },
       mousedown(e) {
+        console.log(this.nodes[0]);
         if (!this.nowTarget) {
           this.selectedDOM = null;
           return;

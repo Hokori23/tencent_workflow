@@ -50,4 +50,20 @@ const isUndef = v => {
   return v === undefined || v === null;
 };
 
-export { debounce, throttle, getDistance, isDef, isUndef };
+/**
+ * 调用接口结果弹窗处理
+ */
+const dealWithResultCode = (code, message, vm) => {
+  if (code) {
+    vm.$alert(message, '警告', {
+      confirmButtonText: '确定',
+      type: 'error'
+    });
+  } else {
+    vm.$message(message, {
+      type: 'success'
+    });
+  }
+};
+
+export { debounce, throttle, getDistance, isDef, isUndef, dealWithResultCode };
