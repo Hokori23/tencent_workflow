@@ -4,20 +4,29 @@
       <span class="currentFlow__text">{{ flowText }}</span>
       <div>
         <el-button
-          type="primary"
-          icon="el-icon-delete"
-          circle
-          plain
+        type="danger"
+          round
           size="mini"
           @click="handleDeleteDOM"
-        ></el-button>
+          >删除选中节点</el-button
+        >
       </div>
     </div>
     <div class="nav__tool">
-      <el-button type="primary" round size="mini" @click="handleCreateFlow"
+      <el-button
+        type="primary"
+        round
+        size="mini"
+        icon="el-icon-plus"
+        @click="handleCreateFlow"
         >添加流程</el-button
       >
-      <el-button type="danger" round size="mini" @click="handleDeleteFlow"
+      <el-button
+        type="danger"
+        round
+        size="mini"
+        icon="el-icon-delete"
+        @click="handleDeleteFlow"
         >删除当前流程</el-button
       >
       <div class="nav__tool__btns">
