@@ -230,6 +230,7 @@
           // 临时从锚点拉扯出一条线
           const tempLine = (this.tempLine = new Line(
             null,
+            this.currentFlowId,
             '',
             node,
             tempLinePoint,

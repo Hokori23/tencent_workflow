@@ -9,7 +9,7 @@ axios.defaults.baseURL = '/api';
 const createFlow = payload => {
   return new Promise((resolve, reject) => {
     axios
-      .post('/create', payload)
+      .post('/create-flow', payload)
       .then(res => {
         resolve(res.data);
       })

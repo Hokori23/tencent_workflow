@@ -69,7 +69,7 @@ APP.get('/get-all', async (req, res) => {
 });
 
 APP.post('/delete', async (req, res) => {
-  const { id } = req.query;
+  const { id } = req.body;
   if (isUndef(id)) {
     res.status(200).json(new Restful(98, '流程ID不能为空'));
     return;

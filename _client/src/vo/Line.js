@@ -1,7 +1,7 @@
 export default class Line {
   /**
-   *
    * @param { number } id
+   * @param { number } flow_id
    * @param { string } text
    * @param { Array<Node> } start
    * @param { Array<Node> } end
@@ -10,8 +10,19 @@ export default class Line {
    * @param { number } type
    * @param { string } style  // JSON对象字符串（数据库）
    */
-  constructor(id, text, start, end, start_anchor, end_anchor, type, style) {
+  constructor(
+    id,
+    flow_id,
+    text,
+    start,
+    end,
+    start_anchor,
+    end_anchor,
+    type,
+    style
+  ) {
     this.id = id;
+    this.flow_id = flow_id;
     this.text = text; // 条件文字
     this.start = start;
     this.end = end;

@@ -7,7 +7,8 @@ Vue.use(VueRouter);
 const routes = [
   {
     path: '/',
-    redirect: '/1'
+    component: Home,
+    props: true
   },
   {
     path: '/:flowId',
