@@ -3,11 +3,7 @@
     <div class="currentFlow">
       <span class="currentFlow__text">{{ flowText }}</span>
       <div>
-        <el-button
-        type="danger"
-          round
-          size="mini"
-          @click="handleDeleteDOM"
+        <el-button type="danger" round size="mini" @click="handleDeleteDOM"
           >删除选中节点</el-button
         >
       </div>
@@ -20,6 +16,14 @@
         icon="el-icon-plus"
         @click="handleCreateFlow"
         >添加流程</el-button
+      >
+      <el-button
+        type="success"
+        round
+        size="mini"
+        icon="el-icon-upload"
+        @click="handleUpdateFlow"
+        >保存流程</el-button
       >
       <el-button
         type="danger"
@@ -94,6 +98,9 @@
         }).then(() => {
           this.$emit('deleteFlow');
         });
+      },
+      handleUpdateFlow() {
+        bus.$emit('updateFlow');
       }
     }
   };

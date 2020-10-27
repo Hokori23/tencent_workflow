@@ -10,6 +10,7 @@
     <FlowPanel
       :currentFlowId="currentFlowId"
       v-if="currentFlowId && flows.length"
+      ref="flowPanel"
     />
     <section
       v-else
@@ -89,6 +90,17 @@
     },
     created() {
       this.getAllFlows();
+    },
+    async beforeRouteUpdate(to, from, next) {
+      console.log('beforeRouteUpdate');
+      try {
+        await this.$refs['flowPanel'].updateFlow();
+        next();
+      } catch (e) {
+        this.$alert(e, '警告', {
+          type: 'error'
+        });
+      }
     }
   };
 </script>
