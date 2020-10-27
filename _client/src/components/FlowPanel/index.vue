@@ -439,7 +439,7 @@
           });
           dealWithResultCode(code, message, this);
           if (code) {
-            reject(e);
+            reject(message);
           } else {
             resolve();
           }
@@ -461,7 +461,7 @@
           start_anchor,
           end_anchor,
           type,
-          style
+          option
         } = line;
         // 查找startNode, endNode
         let start,
@@ -499,7 +499,7 @@
           start_anchor,
           end_anchor,
           type,
-          style
+          option
         );
         nodes[startIdx].lines.push(line);
         nodes[endIdx].lines.push(line);
@@ -526,7 +526,7 @@
           start_anchor,
           end_anchor,
           type,
-          style
+          option
         } = line;
         const start_id = start.id;
         const end_id = end.id;
@@ -539,7 +539,7 @@
           start_anchor,
           end_anchor,
           type,
-          style: JSON.stringify(style)
+          option: JSON.stringify(option)
         };
       }
     },

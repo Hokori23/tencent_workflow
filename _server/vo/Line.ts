@@ -12,7 +12,7 @@ interface LineAttributes {
   start_anchor: number;
   end_anchor: number;
   type: number;
-  style: string;
+  option: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -31,7 +31,7 @@ class Line extends Model implements LineAttributes {
    * 3: 贝塞尔曲线, 固定锚点;
    */
   public type!: number;
-  public style!: string;
+  public option!: string;
   public readonly createdAt!: Date;
   public readonly updatedAt!: Date;
 }
@@ -102,7 +102,7 @@ Line.init(
         max: 3
       }
     },
-    style: {
+    option: {
       type: DataTypes.TEXT,
       defaultValue: '{}'
     }

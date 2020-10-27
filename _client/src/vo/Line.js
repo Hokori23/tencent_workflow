@@ -8,7 +8,7 @@ export default class Line {
    * @param { number } start_anchor // 1上; 2右; 3下; 4左;
    * @param { number } end_anchor // 1上; 2右; 3下; 4左;
    * @param { number } type
-   * @param { string } style  // JSON对象字符串（数据库）
+   * @param { string } option  // JSON对象字符串（数据库）
    */
   constructor(
     id,
@@ -19,7 +19,7 @@ export default class Line {
     start_anchor,
     end_anchor,
     type,
-    style
+    option
   ) {
     this.id = id;
     this.flow_id = flow_id;
@@ -35,7 +35,8 @@ export default class Line {
      */
     this.type = type;
     /**
-     * style: {
+     * 自定义直线样式
+     * option: {
      *    path: {
      *      stroke: string,
      *      strokeWidth: number,
@@ -46,10 +47,10 @@ export default class Line {
      *    }
      * }
      */
-    if (type === 2 && style) {
-      this.style = JSON.parse(style);
+    if (type === 2 && option) {
+      this.option = JSON.parse(option);
     } else {
-      this.style = {};
+      this.option = {};
     }
   }
 }

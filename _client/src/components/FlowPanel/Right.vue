@@ -92,7 +92,7 @@
           <el-input
             style="margin-top: 10px"
             size="small"
-            v-model="node.style.path.stroke"
+            v-model="node.option.path.stroke"
           >
           </el-input>
         </div>
@@ -101,7 +101,7 @@
           <el-input
             style="margin-top: 10px"
             size="small"
-            v-model="node.style.path.strokeWidth"
+            v-model="node.option.path.strokeWidth"
           >
           </el-input>
         </div>
@@ -113,7 +113,7 @@
           <el-input
             style="margin-top: 10px"
             size="small"
-            v-model="node.style.point.fill"
+            v-model="node.option.point.fill"
           >
           </el-input>
         </div>
@@ -122,7 +122,7 @@
           <el-input
             style="margin-top: 10px"
             size="small"
-            v-model="node.style.point.stroke"
+            v-model="node.option.point.stroke"
           >
           </el-input>
         </div>
@@ -183,7 +183,7 @@
         if (type === 'LINE') {
           node.type = this.LineTypeMap.indexOf(node.type) + 1;
           if (node.type === 2 && this.selectedDOM.type !== node.type) {
-            node.style = this.defaultStyle();
+            node.option = this.defaultStyle();
           }
         }
         this.$emit('saveNode', this.selectedDOM, node, type);
@@ -191,8 +191,8 @@
       defaultStyle() {
         return new Object({
           path: {
-            stroke: '#e6e6e6',
-            strokeWidth: 2
+            stroke: '#252525',
+            strokeWidth: 1
           },
           point: {
             fill: '#ccc',
@@ -215,9 +215,9 @@
         if (type === 'LINE') {
           this.node.type = this.LineTypeMap[this.node.type - 1];
           if (this.selectedDOM.type === 2) {
-            this.node.style = this.isEmptyObject(this.node.style)
+            this.node.option = this.isEmptyObject(this.node.option)
               ? this.defaultStyle()
-              : JSON.parse(JSON.stringify(this.selectedDOM.style));
+              : JSON.parse(JSON.stringify(this.selectedDOM.option));
           }
         }
       },

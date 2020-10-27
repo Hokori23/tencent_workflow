@@ -7,24 +7,23 @@
     }"
     @mousedown="handleSelectLine"
   >
-    <!-- 2:自定义直线样式, 固定锚点 -->
-    <!-- <line
-      :x1="position.x1"
-      :y1="position.y1"
-      :x2="position.x2"
-      :y2="position.y2"
-      :style="`stroke: black; stroke-width: 5; stroke-linecap: round`"
-      @mousedown="handleChangeTarget('LINE', true, idx)"
-      @mouseup="handleChangeTarget('LINE', false, idx)"
-    >
-    </line> -->
     <path
+      v-if="line.type === 1 || line.type === 2"
       :d="`M${position.x1}, ${position.y1} L${position.x2}, ${position.y2}`"
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
-      :style="line.type === 2 ? line.style.path : false"
-    >
-    </path>
+      :style="line.type === 2 ? line.option.path : false"
+    />
+    <path
+      v-else-if="line.type === 3"
+      class="flow-panel__line--bezier"
+      :d="`M${position.x1}, ${position.y1} Q${~~(
+        (position.x1 + position.x2) /
+        2
+      )} ${position.y2} ${position.x2}, ${position.y2}`"
+      @mousedown="handleChangeTarget('LINE', true, idx)"
+      @mouseup="handleChangeTarget('LINE', false, idx)"
+    />
     <!-- 条件文字 -->
     <foreignObject
       :width="width"
@@ -53,14 +52,14 @@
         :cy="position.y1"
         @mousedown="handleChangeTarget('POINT', true, idx, 'start')"
         @mouseup="handleChangeTarget('POINT', false, idx, 'start')"
-        :style="line.type === 2 ? line.style.point : false"
+        :style="line.type === 2 ? line.option.point : false"
       />
       <circle
         :cx="position.x2"
         :cy="position.y2"
         @mousedown="handleChangeTarget('POINT', true, idx, 'end')"
         @mouseup="handleChangeTarget('POINT', false, idx, 'end')"
-        :style="line.type === 2 ? line.style.point : false"
+        :style="line.type === 2 ? line.option.point : false"
       />
     </g>
   </g>
@@ -173,12 +172,11 @@
 <style lang="scss" scoped>
   .flow-panel__line {
     path {
-      stroke: #e6e6e6;
-      stroke-width: 2;
+      stroke: #252525;
+      stroke-width: 1;
       stroke-linecap: round;
       &:hover {
-        stroke: ccc;
-        stroke-width: 4;
+        stroke-width: 3;
       }
     }
     cursor: pointer;
@@ -194,8 +192,7 @@
     }
     &--active {
       path {
-        stroke: ccc;
-        stroke-width: 4;
+        stroke-width: 2;
       }
       .flow-panel__line__point circle {
         fill: #ddd;
@@ -205,6 +202,9 @@
     }
     &--non-select {
       user-select: none;
+    }
+    &--bezier {
+      fill: transparent;
     }
   }
 </style>
