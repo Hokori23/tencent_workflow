@@ -3,8 +3,8 @@ export default class Line {
    * @param { number } id
    * @param { number } flow_id
    * @param { string } text
-   * @param { Array<Node> } start
-   * @param { Array<Node> } end
+   * @param { Node } start
+   * @param { Node } end
    * @param { number } start_anchor // 1上; 2右; 3下; 4左;
    * @param { number } end_anchor // 1上; 2右; 3下; 4左;
    * @param { number } type

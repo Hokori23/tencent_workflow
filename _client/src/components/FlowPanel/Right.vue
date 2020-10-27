@@ -23,7 +23,14 @@
       </div>
       <div>
         名称
-        <el-input style="margin-top: 10px" size="small" v-model="node.name">
+        <el-input
+          style="margin-top: 10px"
+          size="small"
+          v-model="node.name"
+          :minlength="2"
+          :maxlength="10"
+          show-word-limit
+        >
         </el-input>
       </div>
       <div>
@@ -212,7 +219,6 @@
               ? this.defaultStyle()
               : JSON.parse(JSON.stringify(this.selectedDOM.style));
           }
-          // style clone -------------- to do
         }
       },
       isEmptyObject(obj) {

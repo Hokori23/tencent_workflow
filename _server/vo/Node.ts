@@ -7,6 +7,9 @@ interface NodeAttributes {
   id: number;
   flow_id: number;
   name: string; // 节点名
+  x: number;
+  y: number;
+  type: number;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -59,12 +62,28 @@ Node.init(
     x: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'x不能为空'
+        },
+        notEmpty: {
+          msg: 'x不能为空'
+        }
+      }
     },
     y: {
       type: DataTypes.INTEGER,
       defaultValue: 0,
-      allowNull: false
+      allowNull: false,
+      validate: {
+        notNull: {
+          msg: 'y不能为空'
+        },
+        notEmpty: {
+          msg: 'y不能为空'
+        }
+      }
     },
     type: {
       type: DataTypes.INTEGER.UNSIGNED,

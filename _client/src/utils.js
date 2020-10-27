@@ -60,8 +60,10 @@ const dealWithResultCode = (code, message, vm) => {
       type: 'error'
     });
   } else {
-    vm.$message(message, {
-      type: 'success'
+    vm.$message({
+      message,
+      type: 'success',
+      duration: 1000
     });
   }
 };
