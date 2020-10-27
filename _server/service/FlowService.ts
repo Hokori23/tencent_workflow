@@ -35,9 +35,8 @@ const Update__Bulk = async (
     }
     const hasNodes = bulkNodes && bulkNodes.length;
     const hasLines = bulkLines && bulkLines.length;
-    console.log(hasNodes, hasLines);
     if (!hasNodes && !hasLines) {
-      return new Restful(2, '无更新');
+      return new Restful(0, '无更新');
     }
     const promises: Array<Promise<any>> = [];
     hasNodes &&

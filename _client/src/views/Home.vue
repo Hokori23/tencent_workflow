@@ -93,14 +93,17 @@
     },
     async beforeRouteUpdate(to, from, next) {
       console.log('beforeRouteUpdate');
-      try {
-        await this.$refs['flowPanel'].updateFlow();
-        next();
-      } catch (e) {
-        this.$alert(e, '警告', {
-          type: 'error'
-        });
+      if (this.$refs['flowPanel']) {
+        try {
+          await this.$refs['flowPanel'].updateFlow();
+          next();
+        } catch (e) {
+          this.$alert(e, '警告', {
+            type: 'error'
+          });
+        }
       }
+      next();
     }
   };
 </script>
