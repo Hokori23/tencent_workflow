@@ -48,12 +48,14 @@
       "@action": ["action"],
       "@service": ["service"],
       "@public": ["public"],
+      "@routes": ["routes"],
       "@database": ["database"],
 
       "@vo/*": ["vo/*"],
       "@action/*": ["action/*"],
       "@service/*": ["service/*"],
       "@public/*": ["public/*"],
+      "@routes/*": ["routes/*"],
       "@database/*": ["database/*"],
 
       "@config": ["project.config.js"]

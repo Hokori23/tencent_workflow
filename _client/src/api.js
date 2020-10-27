@@ -1,6 +1,84 @@
 import axios from 'axios';
 
 axios.defaults.baseURL = '/api';
+const flowAPI = axios.create({
+  baseURL: '/flow'
+});
+const nodeAPI = axios.create({
+  baseURL: '/node'
+});
+const lineAPI = axios.create({
+  baseURL: '/line'
+});
+
+/**
+ * 创建节点
+ * @param { Node } payload
+ */
+const createNode = payload => {
+  return new Promise((resolve, reject) => {
+    nodeAPI
+      .post('/create', payload)
+      .then(res => {
+        resolve(res.data);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+};
+
+/**
+ * 删除节点
+ * @param { number } id
+ */
+const deleteNode = id => {
+  return new Promise((resolve, reject) => {
+    nodeAPI
+      .post('/delete', { id })
+      .then(res => {
+        resolve(res.data);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+};
+
+/**
+ * 创建连线
+ * @param { Line } payload
+ */
+const createLine = payload => {
+  return new Promise((resolve, reject) => {
+    lineAPI
+      .post('/create', payload)
+      .then(res => {
+        resolve(res.data);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+};
+
+/**
+ * 删除连线
+ * @param { number } id
+ */
+const deleteLine = id => {
+  return new Promise((resolve, reject) => {
+    lineAPI
+      .post('/delete', { id })
+      .then(res => {
+        resolve(res.data);
+      })
+      .catch(e => {
+        reject(e);
+      });
+  });
+};
+
 /**
  * 创建流程
  * @param { Object } payload
@@ -8,8 +86,8 @@ axios.defaults.baseURL = '/api';
  */
 const createFlow = payload => {
   return new Promise((resolve, reject) => {
-    axios
-      .post('/create-flow', payload)
+    flowAPI
+      .post('/create', payload)
       .then(res => {
         resolve(res.data);
       })
@@ -26,7 +104,7 @@ const createFlow = payload => {
  */
 const updateFlow = payload => {
   return new Promise((resolve, reject) => {
-    axios
+    flowAPI
       .post('/update', payload)
       .then(res => {
         resolve(res.data);
@@ -43,7 +121,7 @@ const updateFlow = payload => {
  */
 const getFlow = id => {
   return new Promise((resolve, reject) => {
-    axios
+    flowAPI
       .get('/get', {
         params: {
           id
@@ -63,7 +141,7 @@ const getFlow = id => {
  */
 const getAllFlows = () => {
   return new Promise((resolve, reject) => {
-    axios
+    flowAPI
       .get('/get-all')
       .then(res => {
         resolve(res.data);
@@ -79,7 +157,7 @@ const getAllFlows = () => {
  */
 const deleteFlow = id => {
   return new Promise((resolve, reject) => {
-    axios
+    flowAPI
       .post('/delete', { id })
       .then(res => {
         resolve(res.data);
@@ -89,4 +167,14 @@ const deleteFlow = id => {
       });
   });
 };
-export { createFlow, updateFlow, getFlow, getAllFlows, deleteFlow };
+export {
+  createNode,
+  deleteNode,
+  createLine,
+  deleteLine,
+  createFlow,
+  updateFlow,
+  getFlow,
+  getAllFlows,
+  deleteFlow
+};

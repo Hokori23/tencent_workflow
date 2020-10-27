@@ -24,8 +24,8 @@ const Create = async (flow: Flow): Promise<Restful> => {
  */
 const Update__Bulk = async (
   id: number,
-  bulkNodes: Array<Node>,
-  bulkLines: Array<Line>
+  bulkNodes: Array<Node> = [],
+  bulkLines: Array<Line> = []
 ): Promise<Restful> => {
   const t = await DB.transaction();
   try {
@@ -33,39 +33,23 @@ const Update__Bulk = async (
     if (!flow) {
       return new Restful(1, '流程不存在');
     }
-    const promises: Array<Promise<any>> = [
-      NodeAction.CreateOrUpdate__Bulk(bulkNodes, t),
-      LineAction.CreateOrUpdate__Bulk(bulkLines, t),
-      NodeAction.Retrieve__All(id)
-    ];
-    let promiseValues = await Promise.all(promises);
-    bulkNodes = promiseValues.pop();
-    bulkLines = promiseValues.pop();
-    let nodes = promiseValues.pop();
-    
-    // 删除节点
-    nodes = nodes.filter((node) => {
-      return nodes.indexOf(node) === -1;
-    });
-    nodes.forEach((node) => {
-      promises.push(NodeAction.Delete(node.id, t));
-    });
-    promiseValues = await Promise.all(promises);
-    for (let i = 0; i < promiseValues.length; i++) {
-      if (promiseValues[i] <= 0) {
-        throw new Error('删除节点失败');
-      }
+    const hasNodes = bulkNodes && bulkNodes.length;
+    const hasLines = bulkLines && bulkLines.length;
+    console.log(hasNodes, hasLines);
+    if (!hasNodes && !hasLines) {
+      return new Restful(2, '无更新');
     }
+    const promises: Array<Promise<any>> = [];
+    hasNodes &&
+      promises.push(NodeAction.CreateOrUpdate__Bulk(<Array<Node>>bulkNodes, t));
+    hasLines &&
+      promises.push(LineAction.CreateOrUpdate__Bulk(<Array<Line>>bulkLines, t));
 
+    await Promise.all(promises);
     await t.commit();
-
     return new Restful(0, '更新流程成功', {
-      nodes: bulkNodes.map((node) => {
-        return node.toJSON();
-      }),
-      lines: bulkLines.map((line) => {
-        return line.toJSON();
-      })
+      nodes: bulkNodes,
+      lines: bulkLines
     });
   } catch (e) {
     await t.rollback();
