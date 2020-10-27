@@ -8,7 +8,15 @@
     @mousedown="handleSelectLine"
   >
     <path
-      v-if="line.type === 1 || line.type === 2"
+      v-if="line.type === 1"
+      class="flow-panel__line--dynamic"
+      :d="dynamicPath"
+      @mousedown="handleChangeTarget('LINE', true, idx)"
+      @mouseup="handleChangeTarget('LINE', false, idx)"
+      :style="line.type === 2 ? line.option.path : false"
+    />
+    <path
+      v-else-if="line.type === 2"
       :d="`M${position.x1}, ${position.y1} L${position.x2}, ${position.y2}`"
       @mousedown="handleChangeTarget('LINE', true, idx)"
       @mouseup="handleChangeTarget('LINE', false, idx)"
@@ -45,7 +53,12 @@
     <!-- 线两端 -->
     <g
       class="flow-panel__line__point"
-      v-if="!line.end.absolutePosition && !line.start.absolutePosition"
+      v-if="
+        line.type !== 1 &&
+        selectedIdx === idx &&
+        !line.end.absolutePosition &&
+        !line.start.absolutePosition
+      "
     >
       <circle
         :cx="position.x1"
@@ -82,6 +95,20 @@
         immediate: true
       }
     },
+    computed: {
+      dynamicPath() {
+        const { x1, y1, x2, y2 } = this.position;
+        const point1 = `${x1}, ${y1}`;
+        const point2 = this.dynamicLineIsHorizontal
+          ? `${~~((x1 + x2) / 2)}, ${y1}`
+          : `${x1}, ${~~((y1 + y2) / 2)}`;
+        const point3 = this.dynamicLineIsHorizontal
+          ? `${~~((x1 + x2) / 2)}, ${y2}`
+          : `${x2}, ${~~((y1 + y2) / 2)}`;
+        const point4 = `${x2}, ${y2}`;
+        return `M${point1} L${point2} L${point3} L${point4}`;
+      }
+    },
     data() {
       return {
         proxyLine: null,
@@ -92,7 +119,8 @@
           y2: 0
         },
         width: 0,
-        height: 0
+        height: 0,
+        dynamicLineIsHorizontal: false
       };
     },
     methods: {
@@ -158,6 +186,53 @@
         start.absolutePosition && (start.absolutePosition = this.position);
         end.absolutePosition && (end.absolutePosition = this.position);
 
+        // 默认直线动态锚点
+        if (this.line.type === 1) {
+          const { start, end, start_anchor, end_anchor } = this.line;
+          let x1, x2, y1, y2;
+          (() => {
+            const { position } = start;
+            const { x, y } = position;
+            x1 = x;
+            y1 = y;
+          })();
+          (() => {
+            const { position } = end;
+            const { x, y } = position;
+            x2 = x;
+            y2 = y;
+          })();
+          const pmSignX = x2 - x1 > 0 ? 1 : -1; // x轴
+          const pmSignY = y1 - y2 > 0 ? 1 : -1; // y轴
+          const startAnchorPosition = start.anchorPosition;
+          const endAnchorPosition = end.anchorPosition;
+
+          // true为左右连线; false为上下连线
+          // 大于60是为了美观优化
+          let flag = (this.dynamicLineIsHorizontal =
+            pmSignX === 1
+              ? endAnchorPosition[3].cx - startAnchorPosition[1].cx > 60
+              : startAnchorPosition[3].cx - endAnchorPosition[1].cx > 60);
+          if (flag) {
+            // 左右连线
+            if (pmSignX === 1) {
+              this.line.start_anchor = 2;
+              this.line.end_anchor = 4;
+            } else {
+              this.line.start_anchor = 4;
+              this.line.end_anchor = 2;
+            }
+          } else {
+            // 上下连线
+            if (pmSignY === 1) {
+              this.line.start_anchor = 1;
+              this.line.end_anchor = 3;
+            } else {
+              this.line.start_anchor = 3;
+              this.line.end_anchor = 1;
+            }
+          }
+        }
         if (!this.$refs['text']) {
           return;
         }
@@ -203,7 +278,8 @@
     &--non-select {
       user-select: none;
     }
-    &--bezier {
+    &--bezier,
+    &--dynamic {
       fill: transparent;
     }
   }

@@ -72,12 +72,14 @@
         const { x, y } = position;
         const halfWidth = this.width / 2;
         const halfHeight = this.height / 2;
-        return [
+        const anchorPosition = [
           { cx: x + halfWidth, cy: y }, // 上
           { cx: x + this.width, cy: y + halfHeight }, // 右
           { cx: x + halfWidth, cy: y + this.height }, // 下
           { cx: x, cy: y + halfHeight } // 左
         ];
+        this.node.anchorPosition = anchorPosition;
+        return anchorPosition;
       }
     },
     data() {
