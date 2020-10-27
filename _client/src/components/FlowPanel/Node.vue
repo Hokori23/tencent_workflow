@@ -8,10 +8,10 @@
     @mousedown="handleSelectNode"
   >
     <rect
-      :width="width + 40"
-      :height="height + 40"
-      :x="node.position.x - 20"
-      :y="node.position.y - 20"
+      :width="width + 80"
+      :height="height + 80"
+      :x="node.position.x - 40"
+      :y="node.position.y - 40"
       style="fill: transparent; cursor: default"
     />
     <foreignObject
@@ -111,35 +111,45 @@
           });
         }
       },
-      computeNearestAnchor(idx, node) {
-        this.isListening = true;
-        if (node === this.node) {
-          return;
-        }
-        this.$refs['node'].onmousemove = () => {
-          const { x2, y2 } = this.tempLinePoint.absolutePosition; // 线头绝对坐标
-          // 计算出最近的锚点
-          let minAnchor;
-          let minDistance;
-          this.anchorPosition.forEach((anchor, idx) => {
-            const distance = getDistance(x2, y2, anchor.cx, anchor.cy);
-            if (isUndef(minDistance) || minDistance > distance) {
-              minDistance = distance;
-              minAnchor = idx;
+      computeNearestAnchor(idx, node, pointType) {
+        this.$nextTick(() => {
+          this.isListening = true;
+          if (node === this.node) {
+            return;
+          }
+          this.$refs['node'].onmousemove = () => {
+            let x, y;
+            if (pointType === 'start') {
+              const { x1, y1 } = this.tempLinePoint.absolutePosition; // 线头绝对坐标
+              x = x1;
+              y = y1;
+            } else {
+              const { x2, y2 } = this.tempLinePoint.absolutePosition; // 线头绝对坐标
+              x = x2;
+              y = y2;
             }
-          });
-          this.nearstAnchor = minDistance > 20 ? null : minAnchor;
-        };
+            // 计算出最近的锚点
+            let minAnchor;
+            let minDistance;
+            this.anchorPosition.forEach((anchor, idx) => {
+              const distance = getDistance(x, y, anchor.cx, anchor.cy);
+              if (isUndef(minDistance) || minDistance > distance) {
+                minDistance = distance;
+                minAnchor = idx;
+              }
+            });
+            this.nearstAnchor = minDistance > 20 ? null : minAnchor;
+          };
+        });
       },
-      stopComputingNearestAnchor() {
+      stopComputingNearestAnchor(pointType) {
         this.isListening = false;
         this.$refs['node'].onmousemove = null;
         if (isDef(this.nearstAnchor)) {
           // 吸附在锚点上
-          this.tempLine.end = this.node;
-          this.tempLine.end_anchor = this.nearstAnchor + 1;
-          this.tempLine.start.lines.push(this.tempLine);
-          this.tempLine.end.lines.push(this.tempLine);
+          this.tempLine[pointType] = this.node;
+          this.tempLine[`${pointType}_anchor`] = this.nearstAnchor + 1;
+          this.tempLine[pointType].lines.push(this.tempLine);
           bus.$emit('attachNode');
         }
         this.nearstAnchor = null;

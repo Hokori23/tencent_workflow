@@ -68,7 +68,14 @@
   import Line from '@/vo/Line';
   import Point from '@/vo/Point';
 
-  import { getFlow, updateFlow } from '@/api';
+  import {
+    createNode,
+    deleteNode,
+    createLine,
+    deleteLine,
+    getFlow,
+    updateFlow
+  } from '@/api';
   import { dealWithResultCode } from '@/utils';
 
   export default {
@@ -93,58 +100,21 @@
 
           // 获取数据
           const { code, message, data } = await getFlow(this.currentFlowId);
-
+          dealWithResultCode(code, message, this);
           if (code) {
             return;
           }
           // 处理数据
           let { nodes, lines } = data;
+          console.log(nodes, lines);
           this.nodes = nodes.map((node) => {
-            const { id, flow_id, name, type, x, y } = node;
-            const position = new Point(x, y);
-            return new Node(id, flow_id, name, position, [], type);
+            return this.formatNode(node);
           });
           nodes = this.nodes;
           this.lines = lines.map((line) => {
-            const {
-              id,
-              flow_id,
-              text,
-              start_id,
-              end_id,
-              start_anchor,
-              end_anchor,
-              type,
-              style
-            } = line;
-            // 查找startNode, endNode
-            let start,
-              end,
-              count = 0;
-            for (let i = 0; i < nodes.length; i++) {
-              if (nodes[i].id === start_id) {
-                count++;
-                start = nodes[i];
-              } else if (nodes[i].id === end_id) {
-                count++;
-                end = nodes[i];
-              }
-              if (count === 2) {
-                break;
-              }
-            }
-            return new Line(
-              id,
-              flow_id,
-              text,
-              start,
-              end,
-              start_anchor,
-              end_anchor,
-              type,
-              style
-            );
+            return this.formatLine(line);
           });
+          console.log(this.nodes, this.lines);
         },
         immediate: true
       }
@@ -189,7 +159,7 @@
       changeTarget(nowTarget) {
         this.nowTarget = nowTarget;
       },
-      drop(e) {
+      async drop(e) {
         let { newnodetype, label } = JSON.parse(
           e.dataTransfer.getData('newNode')
         );
@@ -213,16 +183,21 @@
         }
 
         // 添加节点
-        this.nodes.push(
-          new Node(
-            null,
-            this.currentFlowId,
-            label,
-            new Point(e.clientX - offsetLeft - 50, e.clientY - offsetTop - 20),
-            [],
-            newnodetype
-          )
+        let node = new Node(
+          null,
+          this.currentFlowId,
+          label,
+          new Point(e.clientX - offsetLeft - 50, e.clientY - offsetTop - 20),
+          [],
+          newnodetype
         );
+        const { code, message, data } = await createNode(this.destructNode(node));
+        dealWithResultCode(code, message, this);
+        node = this.formatNode(data);
+        if (code) {
+          return;
+        }
+        this.nodes.push(node);
       },
       dragover(e) {
         e.preventDefault();
@@ -240,8 +215,8 @@
           const { idx, x, y } = this.nowTarget;
           const { position } = this.nodes[idx];
           this.$refs['flow-panel'].onmousemove = (e) => {
-            position.x = e.clientX - offsetLeft - x;
-            position.y = e.clientY - offsetTop - y;
+            position.x = ~~(e.clientX - offsetLeft - x);
+            position.y = ~~(e.clientY - offsetTop - y);
           };
           return;
         }
@@ -266,7 +241,7 @@
 
           // 临时从锚点拉扯出一条线
           const tempLine = (this.tempLine = new Line(
-            null,
+            node.id,
             this.currentFlowId,
             '',
             node,
@@ -276,10 +251,11 @@
             1
           ));
           this.lines.push(tempLine);
+          this.tempLine.new = true; // 标志新线
           bus.$emit('computeNearestAnchor', idx, node);
           this.$refs['flow-panel'].onmousemove = (e) => {
-            tempLinePoint.position.x = e.clientX - offsetLeft - (cx - x);
-            tempLinePoint.position.y = e.clientY - offsetTop - (cy - y);
+            tempLinePoint.position.x = ~~(e.clientX - offsetLeft - (cx - x));
+            tempLinePoint.position.y = ~~(e.clientY - offsetTop - (cy - y));
           };
           return;
         }
@@ -309,7 +285,8 @@
           });
           const { x, y } = tempLinePoint.position; // 当前临时节点(左上)坐标
           const { cx, cy } = position; // 线端起始点坐标
-
+          // 将当前节点的线弹出
+          line[pointType].lines.splice(line[pointType].lines.indexOf(line), 1);
           // 将当前节点换成临时浮动节点
           line[pointType] = tempLinePoint;
           // 给Line.vue标志，用于附加absolutePosition && 隐藏两端线头
@@ -320,15 +297,16 @@
           bus.$emit(
             'computeNearestAnchor',
             idx,
-            node === startNode ? endNode : startNode
+            tempLinePoint === startNode ? endNode : startNode,
+            pointType
           );
           this.$refs['flow-panel'].onmousemove = (e) => {
-            tempLinePoint.position.x = e.clientX - offsetLeft - (cx - x);
-            tempLinePoint.position.y = e.clientY - offsetTop - (cy - y);
+            tempLinePoint.position.x = ~~(e.clientX - offsetLeft - (cx - x));
+            tempLinePoint.position.y = ~~(e.clientY - offsetTop - (cy - y));
           };
         }
       },
-      mouseup(e) {
+      async mouseup(e) {
         this.$refs['flow-panel'].onmousemove = null;
         if (!this.nowTarget) {
           return;
@@ -336,11 +314,41 @@
         const { type } = this.nowTarget;
         // 处理情况1 线
         if (type === 'LINE') {
-          bus.$emit('stopComputingNearestAnchor');
+          let pointType;
+          if (this.tempLine) {
+            if (this.tempLine.start.absolutePosition) {
+              pointType = 'start';
+            } else if (this.tempLine.end.absolutePosition) {
+              pointType = 'end';
+            }
+          }
+          bus.$emit('stopComputingNearestAnchor', pointType);
           if (this.isAttachedNode) {
+            if (this.tempLine.new) {
+              // 创建新线
+              console.log('创建新线', this.destructLine(this.tempLine));
+
+              const { code, message, data } = await createLine({
+                ...this.destructLine(this.tempLine),
+                id: null
+              });
+              this.tempLine = Object.assign(this.tempLine, this.formatLine(data));
+              dealWithResultCode(code, message, this);
+              code && this.lines.pop(); // 创建失败
+              !code && delete this.tempLine.new; // 创建成功
+            }
             this.isAttachedNode = false;
           } else if (this.tempLinePoint && this.tempLine) {
-            this.lines.pop();
+            // 删除线
+            if (this.tempLine.new) {
+              this.lines.pop();
+              return;
+            }
+            const { code, message } = await deleteLine(
+              this.lines[this.selectedDOM.idx].id
+            );
+            dealWithResultCode(code, message, this);
+            !code && this.lines.splice(this.selectedDOM.idx, 1);
           }
         }
         // 处理情况2 节点锚点
@@ -357,10 +365,6 @@
             this.selectedType = selectedType;
           }
         }
-        // 处理情况3 线端
-        else if (type === 'POINT') {
-          bus.$emit('stopComputingNearestAnchor');
-        }
         // 清理临时数据
         this.tempLinePoint && delete this.tempLinePoint.absolutePosition;
         this.tempLine = this.tempLinePoint = null;
@@ -369,7 +373,8 @@
       attachNode() {
         this.isAttachedNode = true;
       },
-      deleteDOM() {
+      async deleteDOM() {
+        // to do
         const selectedDOM = this.selectedDOM;
         if (!selectedDOM) {
           this.$alert('暂无选中节点', '警告', {
@@ -379,23 +384,27 @@
         }
         const type = this.selectedType;
         if (type === 'NODE') {
-          // 删除该节点上所有的线
-          selectedDOM.lines.forEach((line) => {
+          selectedDOM.lines.forEach(async (line) => {
             let node;
             if (line.start !== selectedDOM) {
               node = line.start;
             } else {
               node = line.end;
             }
+            // 删除该节点上所有的线
+            const idx1 = this.lines.indexOf(line);
+            idx1 !== -1 && this.lines.splice(idx1, 1);
+
             // 删除线上另一个结点的引用
-            const idx1 = node.lines.indexOf(line);
-            idx1 !== -1 && node.lines.splice(idx1, 1);
-            // 删除线
-            const idx2 = this.lines.indexOf(line);
-            idx2 !== -1 && this.lines.splice(idx2, 1);
+            const idx2 = node.lines.indexOf(line);
+            idx2 !== -1 && node.lines.splice(idx2, 1);
           });
           // 删除该节点
-          this.nodes.splice(selectedDOM.idx, 1);
+          const { code, message } = await deleteNode(
+            this.nodes[selectedDOM.idx].id
+          );
+          dealWithResultCode(code, message, this);
+          !code && this.nodes.splice(selectedDOM.idx, 1);
           return;
         }
         if (type === 'LINE') {
@@ -405,18 +414,145 @@
           const endIdx = end.lines.indexOf(selectedDOM);
           startIdx !== -1 && start.lines.splice(startIdx, 1);
           endIdx !== -1 && end.lines.splice(endIdx, 1);
-          this.lines.splice(selectedDOM.idx, 1);
+          const { code, message } = await deleteLine(
+            this.lines[selectedDOM.idx].id
+          );
+          dealWithResultCode(code, message, this);
+          !code && this.lines.splice(selectedDOM.idx, 1);
         }
         this.selectedDOM = null;
+      },
+      updateFlow() {
+        return new Promise(async (resolve, reject) => {
+          const nodes = this.nodes.map((node) => {
+            return this.destructNode(node);
+          });
+          const lines = this.lines.map((line) => {
+            return this.destructLine(line);
+          });
+          console.log('处理前', this.nodes, this.lines);
+          console.log('处理后', nodes, lines);
+          const { code, message, data } = await updateFlow({
+            id: this.currentFlowId,
+            nodes,
+            lines
+          });
+          dealWithResultCode(code, message, this);
+          if (code) {
+            reject(e);
+          } else {
+            resolve();
+          }
+          console.log(data);
+        });
+      },
+      formatNode(node) {
+        const { id, name, type, x, y } = node;
+        const position = new Point(x, y);
+        return new Node(id, this.currentFlowId, name, position, [], type);
+      },
+      formatLine(line) {
+        const nodes = this.nodes;
+        const {
+          id,
+          text,
+          start_id,
+          end_id,
+          start_anchor,
+          end_anchor,
+          type,
+          style
+        } = line;
+        // 查找startNode, endNode
+        let start,
+          startIdx,
+          end,
+          endIdx,
+          count = 0;
+        for (let i = 0; i < nodes.length; i++) {
+          if (nodes[i].id === start_id) {
+            count++;
+            start = nodes[i];
+            startIdx = i;
+          } else if (nodes[i].id === end_id) {
+            count++;
+            end = nodes[i];
+            endIdx = i;
+          }
+          if (count === 2) {
+            break;
+          }
+        }
+        // to do
+        if (!start) {
+          console.log('出问题，没有起始节点');
+        }
+        if (!end) {
+          console.log('出问题，没有终止节点');
+        }
+        line = new Line(
+          id,
+          this.currentFlowId,
+          text,
+          start,
+          end,
+          start_anchor,
+          end_anchor,
+          type,
+          style
+        );
+        nodes[startIdx].lines.push(line);
+        nodes[endIdx].lines.push(line);
+        return line;
+      },
+      destructNode(node) {
+        const { id, name, position, type } = node;
+        const { x, y } = position;
+        return {
+          id,
+          flow_id: this.currentFlowId,
+          name,
+          x,
+          y,
+          type
+        };
+      },
+      destructLine(line) {
+        const {
+          id,
+          text,
+          start,
+          end,
+          start_anchor,
+          end_anchor,
+          type,
+          style
+        } = line;
+        const start_id = start.id;
+        const end_id = end.id;
+        return {
+          id,
+          flow_id: this.currentFlowId,
+          text,
+          start_id,
+          end_id,
+          start_anchor,
+          end_anchor,
+          type,
+          style: JSON.stringify(style)
+        };
       }
     },
     mounted() {
+      console.log('on');
       bus.$on('deleteDOM', this.deleteDOM);
       bus.$on('attachNode', this.attachNode);
+      bus.$on('updateFlow', this.updateFlow);
     },
     beforeDestroy() {
       bus.$off('deleteDOM', this.deleteDOM);
       bus.$off('attachNode', this.attachNode);
+      bus.$on('updateFlow', this.updateFlow);
     }
   };
 </script>

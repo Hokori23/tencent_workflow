@@ -44,7 +44,10 @@
     </foreignObject>
 
     <!-- 线两端 -->
-    <g class="flow-panel__line__point" v-if="!line.end.absolutePosition">
+    <g
+      class="flow-panel__line__point"
+      v-if="!line.end.absolutePosition && !line.start.absolutePosition"
+    >
       <circle
         :cx="position.x1"
         :cy="position.y1"
@@ -153,6 +156,7 @@
         };
 
         // 给Node.vue提供绝对坐标
+        start.absolutePosition && (start.absolutePosition = this.position);
         end.absolutePosition && (end.absolutePosition = this.position);
 
         if (!this.$refs['text']) {
