@@ -106,7 +106,7 @@
           }
           // 处理数据
           let { nodes, lines } = data;
-          console.log(nodes, lines);
+          console.log('处理前数据', nodes, lines);
           this.nodes = nodes.map((node) => {
             return this.formatNode(node);
           });
@@ -114,7 +114,7 @@
           this.lines = lines.map((line) => {
             return this.formatLine(line);
           });
-          console.log(this.nodes, this.lines);
+          console.log('处理后数据', this.nodes, this.lines);
         },
         immediate: true
       }
@@ -128,6 +128,7 @@
         nowTarget: null, // 当前操作对象: [Node, Line]
         tempLinePoint: null, // 临时线头
         tempLine: null, // 临时线
+        tempNodes: null, // 缓存原始起始节点
         isAttachedNode: false, // 用于判断是否触发了EventBus的'attachNode'事件
         preLinePoint: null // 拖动已存在的线时临时保存原节点 //test
       };
@@ -141,7 +142,7 @@
           LINE: this.lines
         };
         const arr = map[type];
-        this.selectedDOM.idx = arr.indexOf(node);
+        this.$set(this.selectedDOM, 'idx', arr.indexOf(node));
       },
       saveNode(preNode, node, type) {
         const map = {
@@ -208,6 +209,7 @@
           return;
         }
         const { type } = this.nowTarget;
+        console.log('mousedown', type);
         const { offsetTop, offsetLeft } = this.$refs['flow-panel'];
 
         // 处理情况1 节点
@@ -241,7 +243,7 @@
 
           // 临时从锚点拉扯出一条线
           const tempLine = (this.tempLine = new Line(
-            node.id,
+            null,
             this.currentFlowId,
             '',
             node,
@@ -251,7 +253,7 @@
             1
           ));
           this.lines.push(tempLine);
-          this.tempLine.new = true; // 标志新线
+          this.$set(this.tempLine, 'new', true); // 标志新线
           bus.$emit('computeNearestAnchor', idx, node);
           this.$refs['flow-panel'].onmousemove = (e) => {
             tempLinePoint.position.x = ~~(e.clientX - offsetLeft - (cx - x));
@@ -285,6 +287,11 @@
           });
           const { x, y } = tempLinePoint.position; // 当前临时节点(左上)坐标
           const { cx, cy } = position; // 线端起始点坐标
+
+          // 缓存原起始节点
+          const start = line.start;
+          const end = line.end;
+          this.tempNodes = { start, end };
           // 将当前节点的线弹出
           line[pointType].lines.splice(line[pointType].lines.indexOf(line), 1);
           // 将当前节点换成临时浮动节点
@@ -292,14 +299,17 @@
           // 给Line.vue标志，用于附加absolutePosition && 隐藏两端线头
           tempLinePoint.absolutePosition = true;
 
-          const startNode = line.start;
-          const endNode = line.end;
-          bus.$emit(
-            'computeNearestAnchor',
-            idx,
-            tempLinePoint === startNode ? endNode : startNode,
-            pointType
-          );
+          if (line.type === 1) {
+            // 动态锚点需要忽视两个节点
+            bus.$emit('computeNearestAnchor', idx, [start, end], pointType);
+          } else {
+            bus.$emit(
+              'computeNearestAnchor',
+              idx,
+              tempLinePoint === start ? end : start,
+              pointType
+            );
+          }
           this.$refs['flow-panel'].onmousemove = (e) => {
             tempLinePoint.position.x = ~~(e.clientX - offsetLeft - (cx - x));
             tempLinePoint.position.y = ~~(e.clientY - offsetTop - (cy - y));
@@ -312,6 +322,7 @@
           return;
         }
         const { type } = this.nowTarget;
+        console.log('mouseup', type);
         // 处理情况1 线
         if (type === 'LINE') {
           let pointType;
@@ -326,16 +337,31 @@
           if (this.isAttachedNode) {
             if (this.tempLine.new) {
               // 创建新线
-              console.log('创建新线', this.destructLine(this.tempLine));
 
               const { code, message, data } = await createLine({
                 ...this.destructLine(this.tempLine),
                 id: null
               });
-              this.tempLine = Object.assign(this.tempLine, this.formatLine(data));
+              const newLine = this.formatLine(data);
+              this.tempLine = Object.assign(this.tempLine, newLine);
+
+              // 更新引用
+              const { start, end } = this.tempLine;
+              start.lines.splice(start.lines.indexOf(newLine), 1, this.tempLine);
+              end.lines.splice(end.lines.indexOf(newLine), 1, this.tempLine);
+
               dealWithResultCode(code, message, this);
               code && this.lines.pop(); // 创建失败
-              !code && delete this.tempLine.new; // 创建成功
+              !code && this.$set(this.tempLine, 'new', false); // 创建成功
+            } else {
+              // 改变节点或锚点
+              const oldNode = this.tempNodes[pointType];
+              const newNode = this.tempLine[pointType];
+              if (newNode !== oldNode) {
+                // 改变节点
+                // 把当前线推入新节点
+                newNode.lines.push(this.tempLine);
+              }
             }
             this.isAttachedNode = false;
           } else if (this.tempLinePoint && this.tempLine) {
@@ -374,7 +400,6 @@
         this.isAttachedNode = true;
       },
       async deleteDOM() {
-        // to do
         const selectedDOM = this.selectedDOM;
         if (!selectedDOM) {
           this.$alert('暂无选中节点', '警告', {
@@ -430,8 +455,6 @@
           const lines = this.lines.map((line) => {
             return this.destructLine(line);
           });
-          console.log('处理前', this.nodes, this.lines);
-          console.log('处理后', nodes, lines);
           const { code, message, data } = await updateFlow({
             id: this.currentFlowId,
             nodes,
@@ -443,7 +466,6 @@
           } else {
             resolve();
           }
-          console.log(data);
         });
       },
       formatNode(node) {
@@ -483,7 +505,6 @@
             break;
           }
         }
-        // to do
         if (!start) {
           console.log('出问题，没有起始节点');
         }
@@ -544,7 +565,6 @@
       }
     },
     mounted() {
-      console.log('on');
       bus.$on('deleteDOM', this.deleteDOM);
       bus.$on('attachNode', this.attachNode);
       bus.$on('updateFlow', this.updateFlow);

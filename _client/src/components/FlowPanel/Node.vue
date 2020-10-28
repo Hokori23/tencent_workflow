@@ -2,7 +2,8 @@
   <g
     :class="{
       'flow-panel__node': true,
-      'flow-panel__node--active': selectedIdx === idx || isListening
+      'flow-panel__node--active':
+        !isIgnore && (selectedIdx === idx || isListening)
     }"
     ref="node"
     @mousedown="handleSelectNode"
@@ -78,7 +79,8 @@
           { cx: x + halfWidth, cy: y + this.height }, // 下
           { cx: x, cy: y + halfHeight } // 左
         ];
-        this.node.anchorPosition = anchorPosition;
+        const parent = this.$parent;
+        parent.$set(parent.nodes[this.idx], 'anchorPosition', anchorPosition);
         return anchorPosition;
       }
     },
@@ -88,7 +90,8 @@
         width: 0,
         height: 0,
         isListening: false,
-        nearstAnchor: null
+        nearstAnchor: null,
+        isIgnore: false
       };
     },
     methods: {
@@ -116,7 +119,12 @@
       computeNearestAnchor(idx, node, pointType) {
         this.$nextTick(() => {
           this.isListening = true;
+          this.isIgnore = false;
           if (node === this.node) {
+            this.isIgnore = true;
+            return;
+          } else if (node instanceof Array && node.indexOf(this.node) !== -1) {
+            this.isIgnore = true;
             return;
           }
           this.$refs['node'].onmousemove = () => {
@@ -149,9 +157,13 @@
         this.$refs['node'].onmousemove = null;
         if (isDef(this.nearstAnchor)) {
           // 吸附在锚点上
-          this.tempLine[pointType] = this.node;
-          this.tempLine[`${pointType}_anchor`] = this.nearstAnchor + 1;
-          this.tempLine[pointType].lines.push(this.tempLine);
+          const parent = this.$parent;
+          parent.$set(this.tempLine, pointType, this.node);
+          parent.$set(
+            this.tempLine,
+            `${pointType}_anchor`,
+            this.nearstAnchor + 1
+          );
           bus.$emit('attachNode');
         }
         this.nearstAnchor = null;

@@ -54,7 +54,6 @@
     <g
       class="flow-panel__line__point"
       v-if="
-        line.type !== 1 &&
         selectedIdx === idx &&
         !line.end.absolutePosition &&
         !line.start.absolutePosition
@@ -187,7 +186,7 @@
         end.absolutePosition && (end.absolutePosition = this.position);
 
         // 默认直线动态锚点
-        if (this.line.type === 1) {
+        if (this.line.type === 1 && !this.line.new) {
           const { start, end, start_anchor, end_anchor } = this.line;
           let x1, x2, y1, y2;
           (() => {
