@@ -12,7 +12,7 @@ const init = () => {
     try {
       // await DB.authenticate();
       // console.log('Connection has been established successfully.');
-      await DB.sync({ alter: true });
+      await DB.sync();
       console.log('All models were synchronized successfully.');
       resolve();
     } catch (error) {
