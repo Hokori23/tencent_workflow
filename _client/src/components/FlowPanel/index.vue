@@ -333,26 +333,52 @@
               pointType = 'end';
             }
           }
+
           bus.$emit('stopComputingNearestAnchor', pointType);
+
           if (this.isAttachedNode) {
             if (this.tempLine.new) {
-              // 创建新线
+              // 判断是否符合逻辑
+              let flag = true;
+              if (this.tempLine.end.type === 1) {
+                this.$alert('连线终止点不能为开始节点', '警告', {
+                  confirmButtonText: '确定',
+                  type: 'error'
+                });
+                flag = false;
+              } else if (this.tempLine.start.type === 3) {
+                this.$alert('连线起始点不能为结束节点', '警告', {
+                  confirmButtonText: '确定',
+                  type: 'error'
+                });
+                flag = false;
+              }
 
-              const { code, message, data } = await createLine({
-                ...this.destructLine(this.tempLine),
-                id: null
-              });
-              const newLine = this.formatLine(data);
-              this.tempLine = Object.assign(this.tempLine, newLine);
+              if (!flag) {
+                // 还原
+                this.lines.pop();
+              } else {
+                // 创建新线
+                const { code, message, data } = await createLine({
+                  ...this.destructLine(this.tempLine),
+                  id: null
+                });
+                const newLine = this.formatLine(data);
+                this.tempLine = Object.assign(this.tempLine, newLine);
 
-              // 更新引用
-              const { start, end } = this.tempLine;
-              start.lines.splice(start.lines.indexOf(newLine), 1, this.tempLine);
-              end.lines.splice(end.lines.indexOf(newLine), 1, this.tempLine);
+                // 更新引用
+                const { start, end } = this.tempLine;
+                start.lines.splice(
+                  start.lines.indexOf(newLine),
+                  1,
+                  this.tempLine
+                );
+                end.lines.splice(end.lines.indexOf(newLine), 1, this.tempLine);
 
-              dealWithResultCode(code, message, this);
-              code && this.lines.pop(); // 创建失败
-              !code && this.$set(this.tempLine, 'new', false); // 创建成功
+                dealWithResultCode(code, message, this);
+                code && this.lines.pop(); // 创建失败
+                !code && this.$set(this.tempLine, 'new', false); // 创建成功
+              }
             } else {
               // 改变节点或锚点
               const oldNode = this.tempNodes[pointType];
