@@ -121,7 +121,6 @@
           this.isListening = true;
           this.isIgnore = false;
           if (node === this.node) {
-            this.isIgnore = true;
             return;
           } else if (node instanceof Array && node.indexOf(this.node) !== -1) {
             this.isIgnore = true;
