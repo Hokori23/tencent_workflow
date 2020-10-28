@@ -15,7 +15,12 @@ npm run serve
 npm run dev
 ```
 
-### 打包
+### TypeScript编译
 ```
 npm run build
+```
+
+### TypeScript编译--监听模式
+```
+npm run build:watch
 ```
