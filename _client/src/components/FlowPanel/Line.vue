@@ -206,12 +206,22 @@
           const startAnchorPosition = start.anchorPosition;
           const endAnchorPosition = end.anchorPosition;
 
+          const distanceX =
+            pmSignX === 1
+              ? endAnchorPosition[3].cx - startAnchorPosition[1].cx
+              : startAnchorPosition[3].cx - endAnchorPosition[1].cx;
+          const distanceY =
+            pmSignY === 1
+              ? startAnchorPosition[0].cy - endAnchorPosition[2].cy
+              : endAnchorPosition[2].cy - startAnchorPosition[0].cy;
+
           // true为左右连线; false为上下连线
           // 大于60是为了美观优化
-          let flag = (this.dynamicLineIsHorizontal =
-            pmSignX === 1
-              ? endAnchorPosition[3].cx - startAnchorPosition[1].cx > 60
-              : startAnchorPosition[3].cx - endAnchorPosition[1].cx > 60);
+          // let flag = (this.dynamicLineIsHorizontal =
+          //   pmSignX === 1
+          //     ? endAnchorPosition[3].cx - startAnchorPosition[1].cx > 60
+          //     : startAnchorPosition[3].cx - endAnchorPosition[1].cx > 60);
+          let flag = (this.dynamicLineIsHorizontal = distanceX > distanceY);
           if (flag) {
             // 左右连线
             if (pmSignX === 1) {
