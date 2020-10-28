@@ -12,6 +12,8 @@
             size="mini"
             draggable="true"
             newnodetype="1"
+            type="primary"
+            plain
             :label="startNode.label"
           >
             {{ startNode.label }}
@@ -25,6 +27,8 @@
             size="mini"
             draggable="true"
             newnodetype="2"
+            type="success"
+            plain
             :label="normalNode.label"
           >
             {{ normalNode.label }}
@@ -38,6 +42,8 @@
             size="mini"
             draggable="true"
             newnodetype="3"
+            type="danger"
+            plain
             :label="endNode.label"
           >
             {{ endNode.label }}
