@@ -1,18 +1,11 @@
-# tencent_workflow -- 肖千羽
+# workflow -- 肖千羽
 
 
 
-## PS：运行请看`_client`、`__server`文件夹下的`README.md`
+## PS：运行请看`_client`、`_server`文件夹下的`README.md`
 
 [视频演示](https://upyun.hokori.online/2020-10-28/tencent_workflow.mp4)
 
-## 思路历程
-
-拿到这个题目后，首先想的是先**确定前端技术栈**
-
-
-
-<br/>
 
 ### 前端技术栈
 
